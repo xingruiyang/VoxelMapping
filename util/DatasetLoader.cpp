@@ -154,6 +154,11 @@ struct DatasetLoaderImpl
         K(1, 2) = cy;
         return K;
     }
+
+    inline Sophus::SE3d getFirstFramePose()
+    {
+        return groundTruth[0];
+    }
 };
 } // namespace internal
 
@@ -172,6 +177,11 @@ bool DatasetLoader::loadImages(bool pathOnly)
 Eigen::Matrix3f DatasetLoader::loadCalibration()
 {
     return impl->loadCalibration();
+}
+
+Sophus::SE3d DatasetLoader::getFirstFramePose()
+{
+    return impl->getFirstFramePose();
 }
 
 bool DatasetLoader::loadGroundTruth()

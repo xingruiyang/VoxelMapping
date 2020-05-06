@@ -25,7 +25,7 @@ struct VoxelizationImpl
 
   inline VoxelizationImpl(int w, int h, const Eigen::Matrix3d &K) : width(w), height(h), mK(K)
   {
-    deviceMap.create(800000, 600000, 650000, 0.005f, 0.03f);
+    deviceMap.create(1200000, 900000, 1000000, 0.006f, 0.03f);
     deviceMap.reset();
     zRangeX.create(h / 8, w / 8, CV_32FC1);
     zRangeY.create(h / 8, w / 8, CV_32FC1);

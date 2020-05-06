@@ -23,6 +23,7 @@ public:
     bool loadImages(bool pathOnly);
     bool loadGroundTruth();
     Eigen::Matrix3f loadCalibration();
+    Sophus::SE3d getFirstFramePose();
     bool GetNext(cv::Mat &depth, cv::Mat &color, double &time, Sophus::SE3d &camToWorld);
 
 protected:
