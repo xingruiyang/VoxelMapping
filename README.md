@@ -1,10 +1,14 @@
-# Online Voxel Map Generation And Rendering
+# Voxelization: A C++/CUDA library for Generating Voxel Maps From RGB-D Images
 
-![Screenshot1](example/1.png)
-![Screenshot2](example/2.png)
+![Screenshot](example/1.png)
+
+## Patch Note
+
++ 2020-05-06: Added Pangolin for visualization
 
 ## Dependencies
 
++ CMake >= 3.4
 + [OpenCV](https://github.com/opencv/opencv) >= 3.4
 + [Eigen3](https://github.com/eigenteam/eigen-git-mirror) >= 3.3
 + [CUDA](https://developer.nvidia.com/cuda-downloads) >= 10.0 (Although older versions might work)

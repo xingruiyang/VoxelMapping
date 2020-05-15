@@ -29,6 +29,7 @@ int main(int argc, char **argv)
         cv::Mat depth_float;
         depth.convertTo(depth_float, CV_32FC1, 1 / 5000.0);
         map.FuseImage(cv::cuda::GpuMat(depth_float), cv::cuda::GpuMat(color), gt_pose);
+        break;
     };
 
     pangolin::CreateWindowAndBind("Preview");
@@ -54,7 +55,7 @@ int main(int argc, char **argv)
         "\n"
         "void main(void) {\n"
         "    gl_Position = mvpMat * modelMat * vec4(position, 1.0);\n"
-        "    vec3 lightpos = vec3(mvpMat[0][2], mvpMat[1][2], mvpMat[2][2]);\n"
+        "    vec3 lightpos = vec3(mvpMat[0][2], mvpMat[1][2], mvpMat[2][2]-3);\n"
         "    const float ka = 0.3;\n"
         "    const float kd = 0.5;\n"
         "    const float ks = 0.2;\n"

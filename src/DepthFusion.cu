@@ -14,8 +14,8 @@ struct CreateBlockLineTracingFunctor
     HashEntry *hashTable;
     int *bucketMutex;
     int *excessPtr;
-    int hashTableSize;
-    int bucketSize;
+    int nEntry;
+    int nBucket;
 
     float voxelSize;
     float truncDistHalf;
@@ -28,7 +28,7 @@ struct CreateBlockLineTracingFunctor
 
     __device__ __forceinline__ void allocateBlock(const Eigen::Vector3i &blockPos) const
     {
-        createBlock(blockPos, heap, heapPtr, hashTable, bucketMutex, excessPtr, hashTableSize, bucketSize);
+        createBlock(blockPos, heap, heapPtr, hashTable, bucketMutex, excessPtr, nEntry, nBucket);
     }
 
     __device__ __forceinline__ void operator()() const
@@ -154,8 +154,8 @@ struct CheckEntryVisibilityFunctor
     float depthMin;
     float depthMax;
     float voxelSize;
-    int hashTableSize;
-    int voxelBlockSize;
+    int nEntry;
+    int nVBlock;
 
     __device__ __forceinline__ void operator()() const
     {
@@ -169,7 +169,7 @@ struct CheckEntryVisibilityFunctor
         __syncthreads();
 
         uint increment = 0;
-        if (idx < hashTableSize)
+        if (idx < nEntry)
         {
             HashEntry *current = &hashTable[idx];
             if (current->ptr >= 0)
@@ -198,7 +198,7 @@ struct CheckEntryVisibilityFunctor
         if (needScan)
         {
             auto offset = PrefixSum<1024>(increment, visibleEntryCount);
-            if (offset >= 0 && offset < hashTableSize && idx < hashTableSize)
+            if (offset >= 0 && offset < nEntry && idx < nEntry)
                 visibleEntry[offset] = hashTable[idx];
         }
     }
@@ -216,7 +216,7 @@ struct DepthFusionFunctor
     float depthMax;
 
     float truncationDist;
-    int hashTableSize;
+    int nEntry;
     float voxelSize;
     uint count_visible_block;
 
@@ -224,7 +224,7 @@ struct DepthFusionFunctor
 
     __device__ __forceinline__ void operator()() const
     {
-        if (blockIdx.x >= hashTableSize || blockIdx.x >= count_visible_block)
+        if (blockIdx.x >= nEntry || blockIdx.x >= count_visible_block)
             return;
 
         HashEntry &current = visible_blocks[blockIdx.x];
@@ -282,7 +282,6 @@ int FuseImage(MapStruct map, const cv::cuda::GpuMat depth,
     float cy = K(1, 2);
     float invfx = 1.0 / K(0, 0);
     float invfy = 1.0 / K(1, 1);
-
     const int cols = depth.cols;
     const int rows = depth.rows;
 
@@ -295,8 +294,8 @@ int FuseImage(MapStruct map, const cv::cuda::GpuMat depth,
     bfunctor.hashTable = map.hashTable;
     bfunctor.bucketMutex = map.bucketMutex;
     bfunctor.excessPtr = map.excessPtr;
-    bfunctor.hashTableSize = map.hashTableSize;
-    bfunctor.bucketSize = map.bucketSize;
+    bfunctor.nEntry = map.nEntry;
+    bfunctor.nBucket = map.nBucket;
     bfunctor.voxelSize = map.voxelSize;
     bfunctor.truncDistHalf = map.truncationDist * 0.5;
     bfunctor.depth = depth;
@@ -304,7 +303,7 @@ int FuseImage(MapStruct map, const cv::cuda::GpuMat depth,
     bfunctor.invfy = invfy;
     bfunctor.cx = cx;
     bfunctor.cy = cy;
-    bfunctor.depthMin = 0.1f;
+    bfunctor.depthMin = 0.3f;
     bfunctor.depthMax = 3.0f;
     bfunctor.T = camToWorld.cast<float>();
 
@@ -318,7 +317,7 @@ int FuseImage(MapStruct map, const cv::cuda::GpuMat depth,
     cfunctor.visibleEntryCount = map.visibleBlockNum;
     cfunctor.heap = map.heap;
     cfunctor.heapPtr = map.heapPtr;
-    cfunctor.voxelBlockSize = map.voxelBlockSize;
+    cfunctor.nVBlock = map.nVBlock;
     cfunctor.Tinv = camToWorld.inverse().cast<float>();
     cfunctor.cols = cols;
     cfunctor.rows = rows;
@@ -326,13 +325,13 @@ int FuseImage(MapStruct map, const cv::cuda::GpuMat depth,
     cfunctor.fy = fy;
     cfunctor.cx = cx;
     cfunctor.cy = cy;
-    cfunctor.depthMin = 0.1f;
+    cfunctor.depthMin = 0.3f;
     cfunctor.depthMax = 3.0f;
     cfunctor.voxelSize = map.voxelSize;
-    cfunctor.hashTableSize = map.hashTableSize;
+    cfunctor.nEntry = map.nEntry;
 
     thread = dim3(1024);
-    block = dim3(cv::divUp(map.hashTableSize, thread.x));
+    block = dim3(cv::divUp(map.nEntry, thread.x));
 
     callDeviceFunctor<<<block, thread>>>(cfunctor);
 
@@ -349,10 +348,10 @@ int FuseImage(MapStruct map, const cv::cuda::GpuMat depth,
     functor.fy = fy;
     functor.cx = cx;
     functor.cy = cy;
-    functor.depthMin = 0.1f;
+    functor.depthMin = 0.3f;
     functor.depthMax = 3.0f;
     functor.truncationDist = map.truncationDist;
-    functor.hashTableSize = map.hashTableSize;
+    functor.nEntry = map.nEntry;
     functor.voxelSize = map.voxelSize;
     functor.count_visible_block = visible_block_count;
     functor.depth = depth;

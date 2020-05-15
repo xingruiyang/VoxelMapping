@@ -33,19 +33,13 @@ struct MapStruct
     void release();
     bool empty();
     void reset();
-    void create(
-        int hashTableSize,
-        int bucketSize,
-        int voxelBlockSize,
-        float voxelSize,
-        float truncationDist);
-
+    void create(int nEntry, int nBucket, int nVBlock, float voxelSize, float truncationDist);
     void getVisibleBlockCount(uint &hostData);
     void resetVisibleBlockCount();
 
-    int bucketSize;
-    int hashTableSize;
-    int voxelBlockSize;
+    int nBucket;
+    int nEntry;
+    int nVBlock;
     float voxelSize;
     float truncationDist;
 

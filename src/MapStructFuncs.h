@@ -192,10 +192,10 @@ __device__ __forceinline__ void unlockBucket(int *mutex)
     atomicExch(mutex, 0);
 }
 
-// __device__ __forceinline__ bool deleteHashEntry(int *heapPtr, int *heap, int voxelBlockSize, HashEntry *entry)
+// __device__ __forceinline__ bool deleteHashEntry(int *heapPtr, int *heap, int nVBlock, HashEntry *entry)
 // {
 //     int val_old = atomicAdd(heapPtr, 1);
-//     if (val_old < voxelBlockSize)
+//     if (val_old < nVBlock)
 //     {
 //         heap[val_old + 1] = entry->ptr / BLOCK_SIZE_3;
 //         entry->ptr = -1;
@@ -284,16 +284,16 @@ __device__ __forceinline__ void createBlock(const Eigen::Vector3i &blockPos, int
 }
 
 __device__ __forceinline__ bool findEntry(const Eigen::Vector3i &blockPos, HashEntry *&out,
-                                          HashEntry *hashTable, int bucketSize)
+                                          HashEntry *hashTable, int nBucket)
 {
-    uint volatileIdx = hash(blockPos, bucketSize);
+    uint volatileIdx = hash(blockPos, nBucket);
     out = &hashTable[volatileIdx];
     if (out->ptr != -1 && out->pos == blockPos)
         return true;
 
     while (out->offset >= 0)
     {
-        volatileIdx = bucketSize + out->offset - 1;
+        volatileIdx = nBucket + out->offset - 1;
         out = &hashTable[volatileIdx];
         if (out->ptr != -1 && out->pos == blockPos)
             return true;
@@ -305,10 +305,10 @@ __device__ __forceinline__ bool findEntry(const Eigen::Vector3i &blockPos, HashE
 
 __device__ __forceinline__ void findVoxel(const Eigen::Vector3i &voxelPos,
                                           Voxel *&out, HashEntry *hashTable,
-                                          Voxel *listBlocks, int bucketSize)
+                                          Voxel *listBlocks, int nBucket)
 {
     HashEntry *current;
-    if (findEntry(voxelPosToBlockPos(voxelPos), current, hashTable, bucketSize))
+    if (findEntry(voxelPosToBlockPos(voxelPos), current, hashTable, nBucket))
         out = &listBlocks[current->ptr + voxelPosToLocalIdx(voxelPos)];
 }
 

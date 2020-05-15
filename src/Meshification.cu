@@ -20,8 +20,8 @@ struct BuildVertexArray
 
     HashEntry *hashTable;
     Voxel *listBlocks;
-    int hashTableSize;
-    int bucketSize;
+    int nEntry;
+    int nBucket;
     float voxelSize;
     size_t bufferSize;
 
@@ -36,7 +36,7 @@ struct BuildVertexArray
         __syncthreads();
 
         uint val = 0;
-        if (x < hashTableSize && hashTable[x].ptr >= 0)
+        if (x < nEntry && hashTable[x].ptr >= 0)
         {
             needScan = true;
             val = 1;
@@ -55,7 +55,7 @@ struct BuildVertexArray
     __device__ __forceinline__ float read_sdf(Eigen::Vector3f pt, bool &valid) const
     {
         Voxel *voxel = NULL;
-        findVoxel(floor(pt), voxel, hashTable, listBlocks, bucketSize);
+        findVoxel(floor(pt), voxel, hashTable, listBlocks, nBucket);
         if (voxel && voxel->wt != 0)
         {
             valid = true;
@@ -273,13 +273,13 @@ void Polygonize(
     bva.surfaceNormal = static_cast<Eigen::Vector3f *>(normalBuffer);
     bva.hashTable = map_struct.hashTable;
     bva.listBlocks = map_struct.voxelBlock;
-    bva.hashTableSize = map_struct.hashTableSize;
-    bva.bucketSize = map_struct.bucketSize;
+    bva.nEntry = map_struct.nEntry;
+    bva.nBucket = map_struct.nBucket;
     bva.voxelSize = map_struct.voxelSize;
     bva.bufferSize = MAX_NUM_MESH_TRIANGLES;
 
     dim3 thread(1024);
-    dim3 block = dim3(cv::divUp(map_struct.hashTableSize, thread.x));
+    dim3 block = dim3(cv::divUp(map_struct.nEntry, thread.x));
 
     selectBlockKernel<<<block, thread>>>(bva);
 

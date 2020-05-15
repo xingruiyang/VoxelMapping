@@ -210,7 +210,7 @@ void ProjectRenderingBlocks(
     delegate.rendering_block_count = count_device;
     delegate.listRenderingBlock = listRenderingBlock;
     delegate.depthMax = 3.0f;
-    delegate.depthMin = 0.1f;
+    delegate.depthMin = 0.3f;
     delegate.voxelSize = map.voxelSize;
 
     dim3 thread = dim3(1024);
@@ -246,14 +246,14 @@ struct MapRenderingDelegate
 
     HashEntry *hashTable;
     Voxel *listBlock;
-    int bucketSize;
+    int nBucket;
     float voxelSizeInv;
     float raytraceStep;
 
     __device__ __forceinline__ float read_sdf(const Eigen::Vector3f &pt3d, bool &valid) const
     {
         Voxel *voxel = NULL;
-        findVoxel(floor(pt3d), voxel, hashTable, listBlock, bucketSize);
+        findVoxel(floor(pt3d), voxel, hashTable, listBlock, nBucket);
         if (voxel && voxel->wt != 0)
         {
             valid = true;
@@ -404,7 +404,7 @@ void RenderScene(
     delegate.Tinv = worldToCam;
     delegate.hashTable = map.hashTable;
     delegate.listBlock = map.voxelBlock;
-    delegate.bucketSize = map.bucketSize;
+    delegate.nBucket = map.nBucket;
     delegate.voxelSizeInv = 1.0 / map.voxelSize;
     delegate.raytraceStep = map.truncationDist / map.voxelSize;
 

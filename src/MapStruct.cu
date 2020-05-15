@@ -30,36 +30,36 @@ __global__ void resetHeapKernel(int *heap, int *heapPtr, int numBlock)
 void MapStruct::reset()
 {
     dim3 block(1024);
-    dim3 grid(cv::divUp(hashTableSize, block.x));
-    resetHashKernel<<<grid, block>>>(hashTable, hashTableSize);
+    dim3 grid(cv::divUp(nEntry, block.x));
+    resetHashKernel<<<grid, block>>>(hashTable, nEntry);
 
-    grid = dim3(cv::divUp(voxelBlockSize, block.x));
-    resetHeapKernel<<<grid, block>>>(heap, heapPtr, voxelBlockSize);
+    grid = dim3(cv::divUp(nVBlock, block.x));
+    resetHeapKernel<<<grid, block>>>(heap, heapPtr, nVBlock);
 
     cudaMemset(excessPtr, 0, sizeof(int));
-    cudaMemset(bucketMutex, 0, sizeof(int) * bucketSize);
-    cudaMemset(voxelBlock, 0, sizeof(Voxel) * BLOCK_SIZE_3 * voxelBlockSize);
+    cudaMemset(bucketMutex, 0, sizeof(int) * nBucket);
+    cudaMemset(voxelBlock, 0, sizeof(Voxel) * BLOCK_SIZE_3 * nVBlock);
 }
 
 void MapStruct::create(
-    int hashTableSize,
-    int bucketSize,
-    int voxelBlockSize,
+    int nEntry,
+    int nBucket,
+    int nVBlock,
     float voxelSize,
     float truncationDist)
 {
     cudaMalloc((void **)&excessPtr, sizeof(int));
     cudaMalloc((void **)&heapPtr, sizeof(int));
     cudaMalloc((void **)&visibleBlockNum, sizeof(uint));
-    cudaMalloc((void **)&bucketMutex, sizeof(int) * bucketSize);
-    cudaMalloc((void **)&heap, sizeof(int) * voxelBlockSize);
-    cudaMalloc((void **)&hashTable, sizeof(HashEntry) * hashTableSize);
-    cudaMalloc((void **)&visibleTable, sizeof(HashEntry) * hashTableSize);
-    cudaMalloc((void **)&voxelBlock, sizeof(Voxel) * voxelBlockSize * BLOCK_SIZE_3);
+    cudaMalloc((void **)&bucketMutex, sizeof(int) * nBucket);
+    cudaMalloc((void **)&heap, sizeof(int) * nVBlock);
+    cudaMalloc((void **)&hashTable, sizeof(HashEntry) * nEntry);
+    cudaMalloc((void **)&visibleTable, sizeof(HashEntry) * nEntry);
+    cudaMalloc((void **)&voxelBlock, sizeof(Voxel) * nVBlock * BLOCK_SIZE_3);
 
-    this->hashTableSize = hashTableSize;
-    this->bucketSize = bucketSize;
-    this->voxelBlockSize = voxelBlockSize;
+    this->nEntry = nEntry;
+    this->nBucket = nBucket;
+    this->nVBlock = nVBlock;
     this->voxelSize = voxelSize;
     this->truncationDist = truncationDist;
 }
@@ -88,7 +88,7 @@ void MapStruct::resetVisibleBlockCount()
 
 bool MapStruct::empty()
 {
-    return bucketSize == 0;
+    return nBucket == 0;
 }
 
 } // namespace voxelization
