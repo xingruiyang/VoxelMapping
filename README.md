@@ -1,4 +1,4 @@
-# Voxelization: A C++/CUDA library for Generating Voxel Maps From RGB-D Images
+# Voxelit: A C++/CUDA program to convert RGB-D images into a voxel map
 
 ![Screenshot](example/1.png)
 
@@ -29,3 +29,6 @@ Run the example with the following format:
 ```bash
 ./PangolinDisplay3D <path-to-dataset>/
 ```
+## Acknowledgement
+
+This work is derived from [VoxelHashing](https://github.com/niessner/VoxelHashing) and [InfiniTAM](https://github.com/victorprad/InfiniTAM)
