@@ -98,8 +98,8 @@ namespace voxelization
       uint numTri = 0;
       voxelization::Polygonize(
           deviceMap, numVisBlock, numTri, verts_gpu, norms_gpu, MAX_VERTS_BUFFER);
-      cudaMemcpy(verts_cpu, verts_gpu, sizeof(float) * numTri * 3, cudaMemcpyDeviceToHost);
-      cudaMemcpy(norms_cpu, norms_gpu, sizeof(float) * numTri * 3, cudaMemcpyDeviceToHost);
+      cudaMemcpy(verts_cpu, verts_gpu, sizeof(float) * numTri * 9, cudaMemcpyDeviceToHost);
+      cudaMemcpy(norms_cpu, norms_gpu, sizeof(float) * numTri * 9, cudaMemcpyDeviceToHost);
       verts = verts_cpu;
       norms = norms_cpu;
       return numTri;
