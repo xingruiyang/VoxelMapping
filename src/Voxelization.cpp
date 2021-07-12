@@ -1,4 +1,5 @@
 #include "MapStruct.h"
+#include "GlobalFuncs.h"
 #include "GlobalMapFuncs.h"
 #include "Voxelization.h"
 #include <cuda_runtime.h>
@@ -27,19 +28,9 @@ namespace voxelization
     float *verts_gpu, *verts_cpu;
     float *norms_gpu, *norms_cpu;
 
-    inline VoxelizationImpl(int w, int h, const Eigen::Matrix3f &K) : width(w), height(h), mK(K)
+    inline VoxelizationImpl(int w, int h, const Eigen::Matrix3f &K)
+        : width(w), height(h), mK(K)
     {
-      deviceMap.create(250000, 180000, 200000, 0.01f, 0.03f);
-      deviceMap.reset();
-      zRangeX.create(h / 8, w / 8, CV_32FC1);
-      zRangeY.create(h / 8, w / 8, CV_32FC1);
-
-      cudaMalloc((void **)&renderingBlocks, sizeof(RenderingBlock) * 100000);
-      cudaMalloc((void **)&verts_gpu, sizeof(float) * MAX_VERTS_BUFFER * 3);
-      cudaMalloc((void **)&norms_gpu, sizeof(float) * MAX_VERTS_BUFFER * 3);
-
-      verts_cpu = new float[MAX_VERTS_BUFFER * 3];
-      norms_cpu = new float[MAX_VERTS_BUFFER * 3];
     }
 
     inline ~VoxelizationImpl()
@@ -47,18 +38,34 @@ namespace voxelization
       deviceMap.release();
 
       if (renderingBlocks)
-        cudaFree((void *)renderingBlocks);
+        SafeCall(cudaFree((void *)renderingBlocks));
 
       if (norms_gpu)
-        cudaFree((void *)norms_gpu);
+        SafeCall(cudaFree((void *)norms_gpu));
       if (verts_gpu)
-        cudaFree((void *)verts_gpu);
-      if (verts_gpu)
-        cudaFree((void *)verts_gpu);
+        SafeCall(cudaFree((void *)verts_gpu));
       if (verts_cpu)
         free((void *)verts_cpu);
       if (norms_cpu)
         free((void *)norms_cpu);
+    }
+
+    void create_map(int num_entry, int num_voxel, float voxel_size = 0.01f)
+    {
+      deviceMap.create(num_entry, int(num_voxel * 0.9), num_voxel, voxel_size, voxel_size * 4);
+      deviceMap.reset();
+
+      zRangeX.create(height / 8, width / 8, CV_32FC1);
+      zRangeY.create(height / 8, width / 8, CV_32FC1);
+
+      SafeCall(cudaMalloc((void **)&renderingBlocks, sizeof(RenderingBlock) * 100000));
+      SafeCall(cudaMalloc((void **)&verts_gpu, sizeof(float) * MAX_VERTS_BUFFER * 3));
+      SafeCall(cudaMalloc((void **)&norms_gpu, sizeof(float) * MAX_VERTS_BUFFER * 3));
+
+      verts_cpu = new float[MAX_VERTS_BUFFER * 3];
+      norms_cpu = new float[MAX_VERTS_BUFFER * 3];
+
+      fprintf(stdout, "voxel map created\n");
     }
 
     inline void fuse_depth(
@@ -98,8 +105,8 @@ namespace voxelization
       uint numTri = 0;
       voxelization::Polygonize(
           deviceMap, numVisBlock, numTri, verts_gpu, norms_gpu, MAX_VERTS_BUFFER);
-      cudaMemcpy(verts_cpu, verts_gpu, sizeof(float) * numTri * 9, cudaMemcpyDeviceToHost);
-      cudaMemcpy(norms_cpu, norms_gpu, sizeof(float) * numTri * 9, cudaMemcpyDeviceToHost);
+      SafeCall(cudaMemcpy(verts_cpu, verts_gpu, sizeof(float) * numTri * 9, cudaMemcpyDeviceToHost));
+      SafeCall(cudaMemcpy(norms_cpu, norms_gpu, sizeof(float) * numTri * 9, cudaMemcpyDeviceToHost));
       verts = verts_cpu;
       norms = norms_cpu;
       return numTri;
@@ -112,6 +119,11 @@ namespace voxelization
   }
 
   Voxelization::~Voxelization() = default;
+
+  void Voxelization::CreateMap(int numEntries, int numVoxels, float voxelSize)
+  {
+    impl->create_map(numEntries, numVoxels, voxelSize);
+  }
 
   void Voxelization::FuseDepth(cv::cuda::GpuMat depth, const Eigen::Matrix4f &camToWorld)
   {

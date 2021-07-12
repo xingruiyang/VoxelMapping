@@ -13,6 +13,7 @@ namespace voxelization
     ~Voxelization();
 
     void reset();
+    void CreateMap(int numEntries, int numVoxels, float voxelSize);
     void FuseDepth(cv::cuda::GpuMat depth, const Eigen::Matrix4f &camToWorld);
     void RenderScene(cv::cuda::GpuMat &vmap, const Eigen::Matrix4f &camToWorld);
     int Polygonize(float *&verts_out, float *&norms_out);
