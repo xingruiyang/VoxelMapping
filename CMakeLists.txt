@@ -8,7 +8,6 @@ endif()
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Sophus REQUIRED)
 find_package(Eigen3 3.3 REQUIRED)
 find_package(OpenCV 3.4 REQUIRED)
 

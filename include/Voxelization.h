@@ -13,8 +13,8 @@ namespace voxelization
     ~Voxelization();
 
     void reset();
-    void FuseDepth(cv::cuda::GpuMat depth, const Sophus::SE3d &camToWorld);
-    void RenderScene(cv::cuda::GpuMat &vmap, const Sophus::SE3d &camToWorld);
+    void FuseDepth(cv::cuda::GpuMat depth, const Eigen::Matrix4f &camToWorld);
+    void RenderScene(cv::cuda::GpuMat &vmap, const Eigen::Matrix4f &camToWorld);
     int Polygonize(float *&verts_out, float *&norms_out);
 
   protected:

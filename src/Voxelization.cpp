@@ -62,13 +62,13 @@ namespace voxelization
     }
 
     inline void fuse_depth(
-        cv::cuda::GpuMat depth, const Sophus::SE3d &camToWorld)
+        cv::cuda::GpuMat depth, const Eigen::Matrix4f &camToWorld)
     {
       numVisBlock = voxelization::FuseImage(deviceMap, depth, camToWorld, mK);
     }
 
     inline void render_scene(
-        cv::cuda::GpuMat &vmap, const Sophus::SE3d &camToWorld)
+        cv::cuda::GpuMat &vmap, const Eigen::Matrix4f &camToWorld)
     {
       if (numVisBlock == 0)
         return;
@@ -76,8 +76,8 @@ namespace voxelization
       if (vmap.empty())
         vmap.create(height, width, CV_32FC4);
 
-      Sophus::SE3f camToWorldF = camToWorld.cast<float>();
-      Sophus::SE3f worldToCamF = camToWorld.inverse().cast<float>();
+      Eigen::Matrix4f camToWorldF = camToWorld.cast<float>();
+      Eigen::Matrix4f worldToCamF = camToWorld.inverse().cast<float>();
       ProjectRenderingBlocks(
           deviceMap, numVisBlock, numRdBlocks,
           zRangeX, zRangeY, renderingBlocks,
@@ -113,12 +113,12 @@ namespace voxelization
 
   Voxelization::~Voxelization() = default;
 
-  void Voxelization::FuseDepth(cv::cuda::GpuMat depth, const Sophus::SE3d &camToWorld)
+  void Voxelization::FuseDepth(cv::cuda::GpuMat depth, const Eigen::Matrix4f &camToWorld)
   {
     impl->fuse_depth(depth, camToWorld);
   }
 
-  void Voxelization::RenderScene(cv::cuda::GpuMat &vmap, const Sophus::SE3d &camToWorld)
+  void Voxelization::RenderScene(cv::cuda::GpuMat &vmap, const Eigen::Matrix4f &camToWorld)
   {
     impl->render_scene(vmap, camToWorld);
   }

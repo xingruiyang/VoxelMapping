@@ -10,7 +10,7 @@ namespace voxelization
     int FuseImage(
         MapStruct map,
         const cv::cuda::GpuMat depth,
-        const Sophus::SE3d &camToWorld,
+        const Eigen::Matrix4f &camToWorld,
         const Eigen::Matrix3f &K);
 
     void ProjectRenderingBlocks(
@@ -20,7 +20,7 @@ namespace voxelization
         cv::cuda::GpuMat &zrange_x,
         cv::cuda::GpuMat &zrange_y,
         RenderingBlock *listRenderingBlock,
-        const Sophus::SE3f &worldToCam,
+        const Eigen::Matrix4f &worldToCam,
         const Eigen::Matrix3f &K);
 
     void RenderScene(
@@ -28,7 +28,7 @@ namespace voxelization
         cv::cuda::GpuMat vmap,
         cv::cuda::GpuMat zRangeX,
         cv::cuda::GpuMat zRangeY,
-        const Sophus::SE3f &camToWorld,
+        const Eigen::Matrix4f &camToWorld,
         const Eigen::Matrix3f &K);
 
     void Polygonize(

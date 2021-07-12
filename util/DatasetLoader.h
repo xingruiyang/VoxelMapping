@@ -23,8 +23,8 @@ namespace voxelization
             bool loadImages(bool pathOnly);
             bool loadGroundTruth();
             Eigen::Matrix3f loadCalibration();
-            Sophus::SE3d getFirstFramePose();
-            bool GetNext(cv::Mat &depth, cv::Mat &color, double &time, Sophus::SE3d &camToWorld);
+            Eigen::Matrix4d getFirstFramePose();
+            bool GetNext(cv::Mat &depth, cv::Mat &color, double &time, Eigen::Matrix4d &camToWorld);
 
         protected:
             std::shared_ptr<internal::DatasetLoaderImpl> impl;

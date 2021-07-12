@@ -132,13 +132,13 @@ namespace voxelization
     __device__ __forceinline__ Eigen::Vector3f unprojectWorld(const int &x, const int &y, const float &z,
                                                               const float &invfx, const float &invfy,
                                                               const float &cx, const float &cy,
-                                                              const Sophus::SE3f &camToWorld)
+                                                              const Eigen::Transform<float, 3, Eigen::Affine> &camToWorld)
     {
         return camToWorld * unproject(x, y, z, invfx, invfy, cx, cy);
     }
 
     __device__ __forceinline__ bool checkVertexVisible(const Eigen::Vector3f &worldPt,
-                                                       const Sophus::SE3f &worldToCam,
+                                                       const Eigen::Transform<float, 3, Eigen::Affine> &worldToCam,
                                                        const int &cols, const int &rows,
                                                        const float &fx, const float &fy,
                                                        const float &cx, const float &cy,
@@ -153,7 +153,7 @@ namespace voxelization
     }
 
     __device__ __forceinline__ bool checkBlockVisible(const Eigen::Vector3i &blockPos,
-                                                      const Sophus::SE3f &worldToCam,
+                                                      const Eigen::Transform<float, 3, Eigen::Affine> &worldToCam,
                                                       const float &voxelSize,
                                                       const int &cols, const int &rows,
                                                       const float &fx, const float &fy,

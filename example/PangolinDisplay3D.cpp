@@ -18,7 +18,7 @@ int main(int argc, char **argv)
     loader.loadImages(true);
     loader.loadGroundTruth();
     Eigen::Matrix3f K = loader.loadCalibration();
-    Sophus::SE3d firstFramePose = loader.getFirstFramePose().inverse();
+    Eigen::Matrix4d firstFramePose = loader.getFirstFramePose().inverse();
 
     int w = 640;
     int h = 480;
@@ -26,7 +26,7 @@ int main(int argc, char **argv)
 
     cv::Mat depth, color;
     double time;
-    Sophus::SE3d gt_pose;
+    Eigen::Matrix4d gt_pose;
     int idx = 0;
     while (loader.GetNext(depth, color, time, gt_pose))
     {

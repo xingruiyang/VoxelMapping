@@ -14,7 +14,7 @@ namespace voxelization
 
     struct RenderingBlockDelegate
     {
-        Sophus::SE3f Tinv;
+        Eigen::Transform<float, 3, Eigen::Affine> Tinv;
         int width, height;
         float fx, fy, cx, cy;
         float depthMin, depthMax;
@@ -177,7 +177,7 @@ namespace voxelization
         cv::cuda::GpuMat &zRangeX,
         cv::cuda::GpuMat &zRangeY,
         RenderingBlock *listRenderingBlock,
-        const Sophus::SE3f &worldToCam,
+        const Eigen::Matrix4f &worldToCam,
         const Eigen::Matrix3f &K)
     {
         if (count_visible_block == 0)
@@ -242,7 +242,7 @@ namespace voxelization
         cv::cuda::PtrStepSz<float> zRangeX;
         cv::cuda::PtrStepSz<float> zRangeY;
         float invfx, invfy, cx, cy;
-        Sophus::SE3f pose, Tinv;
+        Eigen::Transform<float, 3, Eigen::Affine> pose, Tinv;
 
         HashEntry *hashTable;
         Voxel *listBlock;
@@ -382,14 +382,14 @@ namespace voxelization
     void RenderScene(
         MapStruct map, cv::cuda::GpuMat vmap,
         cv::cuda::GpuMat zRangeX, cv::cuda::GpuMat zRangeY,
-        const Sophus::SE3f &camToWorld, const Eigen::Matrix3f &K)
+        const Eigen::Matrix4f &camToWorld, const Eigen::Matrix3f &K)
     {
         const int cols = vmap.cols;
         const int rows = vmap.rows;
 
         MapRenderingDelegate delegate;
 
-        Sophus::SE3f worldToCam = camToWorld.inverse();
+        Eigen::Matrix4f worldToCam = camToWorld.inverse();
 
         delegate.width = cols;
         delegate.height = rows;

@@ -24,7 +24,7 @@ namespace voxelization
         float invfx, invfy, cx, cy;
         float depthMin, depthMax;
 
-        Sophus::SE3f T;
+        Eigen::Transform<float, 3, Eigen::Affine> T;
 
         __device__ __forceinline__ void allocateBlock(const Eigen::Vector3i &blockPos) const
         {
@@ -143,7 +143,7 @@ namespace voxelization
         HashEntry *hashTable;
         HashEntry *visibleEntry;
         uint *visibleEntryCount;
-        Sophus::SE3f Tinv;
+        Eigen::Transform<float, 3, Eigen::Affine> Tinv;
 
         int *heap;
         int *heapPtr;
@@ -209,7 +209,7 @@ namespace voxelization
         Voxel *listBlock;
         HashEntry *visible_blocks;
 
-        Sophus::SE3f Tinv;
+        Eigen::Transform<float, 3, Eigen::Affine> Tinv;
         float fx, fy;
         float cx, cy;
         float depthMin;
@@ -274,7 +274,7 @@ namespace voxelization
 
     int FuseImage(MapStruct map,
                   const cv::cuda::GpuMat depth,
-                  const Sophus::SE3d &camToWorld,
+                  const Eigen::Matrix4f &camToWorld,
                   const Eigen::Matrix3f &K)
     {
         float fx = K(0, 0);
@@ -306,7 +306,7 @@ namespace voxelization
         bfunctor.cy = cy;
         bfunctor.depthMin = 0.3f;
         bfunctor.depthMax = 3.0f;
-        bfunctor.T = camToWorld.cast<float>();
+        bfunctor.T = camToWorld;
 
         callDeviceFunctor<<<block, thread>>>(bfunctor);
         map.resetVisibleBlockCount();

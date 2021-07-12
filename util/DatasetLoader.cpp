@@ -14,7 +14,7 @@ namespace voxelization
             std::vector<std::string> colorFilepath;
             std::vector<std::string> depthFilepath;
             std::vector<double> timeStamps;
-            std::vector<Sophus::SE3d> groundTruth;
+            std::vector<Eigen::Matrix4d> groundTruth;
 
             int startPos, endPos, currPos;
 
@@ -72,7 +72,7 @@ namespace voxelization
 
             inline bool loadGroundTruth()
             {
-                std::vector<std::pair<double, Sophus::SE3d>> allGroundTruth;
+                std::vector<std::pair<double, Eigen::Matrix4d>> allGroundTruth;
                 std::ifstream groundTruthFile(groundTruthPath);
                 assert(groundTruthFile.is_open());
 
@@ -89,7 +89,7 @@ namespace voxelization
                         Eigen::Vector3d transolation(tx, ty, tz);
                         Eigen::Quaterniond rotation(qw, qx, qy, qz);
                         rotation.normalize();
-                        Sophus::SE3d camToWorld(rotation.toRotationMatrix(), transolation);
+                        Eigen::Matrix4d camToWorld(rotation.toRotationMatrix(), transolation);
                         allGroundTruth.push_back(std::make_pair(time, camToWorld));
                     }
                 }
@@ -121,7 +121,7 @@ namespace voxelization
                 return (groundTruth.size() == timeStamps.size());
             }
 
-            inline bool GetNext(cv::Mat &depth, cv::Mat &color, double &time, Sophus::SE3d &camToWorld)
+            inline bool GetNext(cv::Mat &depth, cv::Mat &color, double &time, Eigen::Matrix4d &camToWorld)
             {
                 if (currPos == endPos)
                     return false;
@@ -156,7 +156,7 @@ namespace voxelization
                 return K;
             }
 
-            inline Sophus::SE3d getFirstFramePose()
+            inline Eigen::Matrix4d getFirstFramePose()
             {
                 return groundTruth[0];
             }
@@ -180,7 +180,7 @@ namespace voxelization
             return impl->loadCalibration();
         }
 
-        Sophus::SE3d DatasetLoader::getFirstFramePose()
+        Eigen::Matrix4d DatasetLoader::getFirstFramePose()
         {
             return impl->getFirstFramePose();
         }
@@ -195,7 +195,7 @@ namespace voxelization
             impl->reset();
         }
 
-        bool DatasetLoader::GetNext(cv::Mat &depth, cv::Mat &color, double &time, Sophus::SE3d &camToWorld)
+        bool DatasetLoader::GetNext(cv::Mat &depth, cv::Mat &color, double &time, Eigen::Matrix4d &camToWorld)
         {
             return impl->GetNext(depth, color, time, camToWorld);
         }
