@@ -2,13 +2,18 @@
 #include <pangolin/pangolin.h>
 #include <pangolin/gl/glcuda.h>
 #include <pangolin/gl/glvbo.h>
-#include "../util/DatasetLoader.h"
-#include "../include/Voxelization.h"
-#include "../include/ImageProc.h"
+#include "DatasetLoader.h"
+#include "Voxelization.h"
+#include "ImageProc.h"
 
 int main(int argc, char **argv)
 {
-    assert(argc == 2);
+    if (argc < 2)
+    {
+        printf("Usage: %s <path-to-dataset>\n", argv[0]);
+        exit(0);
+    }
+
     voxelization::util::DatasetLoader loader(argv[1]);
     loader.loadImages(true);
     loader.loadGroundTruth();

@@ -1,16 +1,18 @@
-cmake_minimum_required(VERSION 3.4)
-project(Voxelization LANGUAGES CXX CUDA)
+cmake_minimum_required(VERSION 3.0)
+project(vmapping LANGUAGES CXX CUDA)
 
-Set(CMAKE_BUILD_TYPE Release)
-# Set(CMAKE_BUILD_TYPE RelWithDebugInfo)
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
+endif()
 
-Set(CMAKE_CXX_STANDARD 11)
-Set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-Find_Package(Eigen3 3.3 REQUIRED)
-Find_Package(OpenCV 3.4 REQUIRED)
+find_package(Sophus REQUIRED)
+find_package(Eigen3 3.3 REQUIRED)
+find_package(OpenCV 3.4 REQUIRED)
 
-Add_Library(${PROJECT_NAME} SHARED
+add_library(${PROJECT_NAME} SHARED
     src/MapStruct.cu
     src/DepthFusion.cu
     src/RayTracing.cu
@@ -19,42 +21,48 @@ Add_Library(${PROJECT_NAME} SHARED
     src/Voxelization.cpp
 )
 
-Target_Include_Directories(${PROJECT_NAME}
+target_include_directories(${PROJECT_NAME}
 PUBLIC
     ${CUDA_INCLUDE_DIRS}
-    ${CMAKE_CURRENT_SOURCE_DIR}/src
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${Sophus_INCLUDE_DIRS}
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/src>
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/util>
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include/>
     $<INSTALL_INTERFACE:include/>
 )
 
-Target_Link_Libraries(${PROJECT_NAME}
+target_link_libraries(${PROJECT_NAME}
 PUBLIC
     Eigen3::Eigen
     ${CUDA_LIBRARIES}
     ${OpenCV_LIBS}
 )
 
-Set_Target_Properties(${PROJECT_NAME}
+set_target_properties(${PROJECT_NAME}
 PROPERTIES 
     CUDA_SEPARABLE_COMPILATION ON
     POSITION_INDEPENDENT_CODE ON
     CUDA_STANDARD 11
+    CUDA_ARCHITECTURES 75
 )
 
-Find_Package(Pangolin QUIET)
-Message(CHECK_START "Looking for Pangolin")
-if(${Pangolin_FOUND})
-    Message(CHECK_PASS "Found, will build examples")
-    add_executable(PangolinDisplay3D
-        example/PangolinDisplay3D.cpp
-        util/DatasetLoader.cpp
-    )
+# add_subdirectory(example)
 
-    target_link_libraries(PangolinDisplay3D
-    PUBLIC
-        ${PROJECT_NAME}
-        ${Pangolin_LIBRARIES}
-    )
-else()
-    Message(CHECK_FAILED "Not Found")
-endif()
+install(
+TARGETS ${PROJECT_NAME}
+EXPORT ${PROJECT_NAME}-export
+LIBRARY DESTINATION lib
+ARCHIVE DESTINATION lib
+CONFIGURATIONS Release)
+
+install(
+EXPORT ${PROJECT_NAME}-export
+FILE ${PROJECT_NAME}Config.cmake
+NAMESPACE vmapping::
+DESTINATION lib/cmake/${PROJECT_NAME})
+
+install(
+DIRECTORY "${CMAKE_SOURCE_DIR}/include/"
+DESTINATION "include/${PROJECT_NAME}"
+FILES_MATCHING
+PATTERN "*.h")
