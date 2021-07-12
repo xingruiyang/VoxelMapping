@@ -230,9 +230,9 @@ namespace voxelization
                     uint triangleId = atomicAdd(triangle_count, 1);
                     if (triangleId < bufferSize)
                     {
-                        triangles[triangleId * 3] = verts[triTable[cubeIdx][i]] * voxelSize;
+                        triangles[triangleId * 3 + 2] = verts[triTable[cubeIdx][i]] * voxelSize;
                         triangles[triangleId * 3 + 1] = verts[triTable[cubeIdx][i + 1]] * voxelSize;
-                        triangles[triangleId * 3 + 2] = verts[triTable[cubeIdx][i + 2]] * voxelSize;
+                        triangles[triangleId * 3] = verts[triTable[cubeIdx][i + 2]] * voxelSize;
                         auto v10 = triangles[triangleId * 3 + 1] - triangles[triangleId * 3];
                         auto v20 = triangles[triangleId * 3 + 2] - triangles[triangleId * 3];
                         auto n = v10.cross(v20).normalized();
@@ -240,10 +240,10 @@ namespace voxelization
                         surfaceNormal[triangleId * 3 + 1] = n;
                         surfaceNormal[triangleId * 3 + 2] = n;
                     }
-                }
-            }
-        }
-    };
+                } // for (int i = 0; triTable[cubeIdx][i] != -1; i += 3)
+            }     // for (int voxelIdxZ = 0; voxelIdxZ < BLOCK_SIZE; ++voxelIdxZ)
+        }         // __device__ __forceinline__ void operator()() const
+    };            // struct BuildVertexArray
 
     __global__ void selectBlockKernel(BuildVertexArray bva)
     {

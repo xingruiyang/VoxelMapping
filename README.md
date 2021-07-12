@@ -4,15 +4,15 @@
 
 ## Patch Note
 
++ 2021-07-12: Python bindings now available
 + 2020-05-06: Added Pangolin for visualization
 
-## Dependencies
+## Installation
 
-+ CMake >= 3.4
++ CMake >= 3.0
 + [OpenCV](https://github.com/opencv/opencv) >= 3.4
 + [Eigen3](https://github.com/eigenteam/eigen-git-mirror) >= 3.3
 + [CUDA](https://developer.nvidia.com/cuda-downloads) >= 10.0 (Although older versions might work)
-+ Sophus (Included)
 + [Pangolin](https://github.com/stevenlovegrove/Pangolin) (Optional, only for visualization)
 
 ## Examples
