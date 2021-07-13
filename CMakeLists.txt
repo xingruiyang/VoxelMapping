@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.0)
 project(vmapping LANGUAGES CXX CUDA)
 
+option(BUILD_EXAMPLES "build the examples" OFF)
+
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
@@ -45,7 +47,9 @@ PROPERTIES
     CUDA_ARCHITECTURES 75
 )
 
-# add_subdirectory(example)
+if(BUILD_EXAMPLES)
+    add_subdirectory(example)
+endif()
 
 install(
 TARGETS ${PROJECT_NAME}

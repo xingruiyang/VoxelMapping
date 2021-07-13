@@ -7,12 +7,12 @@ if(${Pangolin_FOUND})
     message(CHECK_PASS "Found, will build examples")
     add_executable(pangolin_example
         PangolinDisplay3D.cpp
-        ../util/DatasetLoader.cpp
+        DatasetLoader.cpp
     )
 
     target_link_libraries(pangolin_example
     PUBLIC
-        VMapping
+        vmapping
         ${Pangolin_LIBRARIES}
     )
 else()

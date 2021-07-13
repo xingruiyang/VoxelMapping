@@ -1,12 +1,12 @@
 #include <assert.h>
 #include <pangolin/pangolin.h>
-#include <pangolin/gl/glcuda.h>
-#include <pangolin/gl/glvbo.h>
+// #include <pangolin/gl/glcuda.h>
+// #include <pangolin/gl/glvbo.h>
 #include "DatasetLoader.h"
-#include "Voxelization.h"
 #include "ImageProc.h"
+#include "Voxelization.h"
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     if (argc < 2)
     {
@@ -14,7 +14,7 @@ int main(int argc, char **argv)
         exit(0);
     }
 
-    voxelization::util::DatasetLoader loader(argv[1]);
+    voxelization::DatasetLoader loader(argv[1]);
     loader.loadImages(true);
     loader.loadGroundTruth();
     Eigen::Matrix3f K = loader.loadCalibration();
@@ -22,7 +22,7 @@ int main(int argc, char **argv)
 
     int w = 640;
     int h = 480;
-    voxelization::Voxelization map(w, h, K.cast<double>());
+    voxelization::Voxelization map(w, h, K);
 
     cv::Mat depth, color;
     double time;
@@ -33,7 +33,7 @@ int main(int argc, char **argv)
         printf("Processing frame %d\n", idx++);
         cv::Mat depth_float;
         depth.convertTo(depth_float, CV_32FC1, 1 / 5000.0);
-        map.FuseImage(cv::cuda::GpuMat(depth_float), cv::cuda::GpuMat(color), gt_pose);
+        map.FuseDepth(cv::cuda::GpuMat(depth_float), gt_pose.cast<float>());
         break;
     };
 
@@ -42,7 +42,7 @@ int main(int argc, char **argv)
         pangolin::ProjectionMatrix(640, 480, 420, 420, 320, 240, 0.1, 1000),
         pangolin::ModelViewLookAt(0, 0, -2, 0, 0, 0, pangolin::AxisNegY));
 
-    pangolin::View &d_cam = pangolin::Display("cam")
+    pangolin::View& d_cam = pangolin::Display("cam")
                                 .SetBounds(0.0, 1.0, 0, 1.0, -640.0f / 480.0f)
                                 .SetHandler(new pangolin::Handler3D(s_cam));
 
@@ -93,33 +93,37 @@ int main(int argc, char **argv)
     program.AddShader(pangolin::GlSlShaderType::GlSlFragmentShader, fragShader);
     program.Link();
 
-    const size_t bufferSize = sizeof(float) * 3 * 20000000;
+    // const size_t bufferSize = sizeof(float) * 3 * 20000000;
 
-    pangolin::GlBufferCudaPtr vertexBuffer(
-        pangolin::GlArrayBuffer, bufferSize, GL_FLOAT, 3,
-        cudaGraphicsMapFlagsWriteDiscard, GL_STREAM_DRAW);
-    pangolin::GlBufferCudaPtr normalBuffer(
-        pangolin::GlArrayBuffer, bufferSize, GL_UNSIGNED_BYTE, 3,
-        cudaGraphicsMapFlagsWriteDiscard, GL_STREAM_DRAW);
+    pangolin::GlBuffer vertBuffer, normBuffer;
+    // glGenBuffers(2, buffer);
 
-    pangolin::CudaScopedMappedPtr vertex_out(vertexBuffer);
-    pangolin::CudaScopedMappedPtr normal_out(normalBuffer);
+    // pangolin::GlBufferCudaPtr vertexBuffer(
+    //     pangolin::GlArrayBuffer, bufferSize, GL_FLOAT, 3,
+    //     cudaGraphicsMapFlagsWriteDiscard, GL_STREAM_DRAW);
+    // pangolin::GlBufferCudaPtr normalBuffer(
+    //     pangolin::GlArrayBuffer, bufferSize, GL_UNSIGNED_BYTE, 3,
+    //     cudaGraphicsMapFlagsWriteDiscard, GL_STREAM_DRAW);
 
-    int numTri = map.Polygonize((void *)*vertex_out, (void *)*normal_out);
+    // pangolin::CudaScopedMappedPtr vertex_out(vertexBuffer);
+    // pangolin::CudaScopedMappedPtr normal_out(normalBuffer);
+
+    float *verts, *norms;
+    int num_tri = map.Polygonize(verts, norms);
 
     GLuint vao;
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
 
-    vertexBuffer.Bind();
+    vertBuffer.Bind();
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(0);
 
-    normalBuffer.Bind();
+    normBuffer.Bind();
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(1);
 
-    normalBuffer.Unbind();
+    normBuffer.Unbind();
     glBindVertexArray(0);
 
     while (!pangolin::ShouldQuit())
@@ -130,10 +134,10 @@ int main(int argc, char **argv)
         d_cam.Activate(s_cam);
         program.Bind();
         glBindVertexArray(vao);
-        pangolin::OpenGlMatrix modelMat(firstFramePose.matrix());
+        pangolin::OpenGlMatrix modelMat(firstFramePose);
         program.SetUniform("modelMat", modelMat);
         program.SetUniform("mvpMat", s_cam.GetProjectionModelViewMatrix());
-        glDrawArrays(GL_TRIANGLES, 0, numTri * 3);
+        glDrawArrays(GL_TRIANGLES, 0, num_tri * 3);
         glBindVertexArray(0);
         program.Unbind();
 

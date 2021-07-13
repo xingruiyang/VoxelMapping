@@ -1,6 +1,7 @@
-# Voxelit: A C++/CUDA program to convert RGB-D images into a voxel map
+Fuse RGB-D images into voxel maps
+===
 
-![Screenshot](example/1.png)
+![Screenshot](.github/banner.png)
 
 ## Patch Note
 
