@@ -1,11 +1,11 @@
-#include "ImageProc.h"
 #include "GlobalFuncs.h"
+#include "ImageProc.h"
 
 namespace voxelization
 {
 
-__device__ __forceinline__ Eigen::Matrix<uchar, 4, 1> renderPoint(const Eigen::Vector3f &point, const Eigen::Vector3f &normal,
-                                                                  const Eigen::Vector3f &image, const Eigen::Vector3f &lightPos)
+__device__ __forceinline__ Eigen::Matrix<uchar, 4, 1> renderPoint(const Eigen::Vector3f& point, const Eigen::Vector3f& normal,
+                                                                  const Eigen::Vector3f& image, const Eigen::Vector3f& lightPos)
 {
     Eigen::Vector3f colour(4.f / 255.f, 2.f / 255.f, 2.f / 255.f);
     if (!isnan(point(0)))
@@ -59,7 +59,7 @@ __global__ void renderSceneKernel(const cv::cuda::PtrStep<Eigen::Vector4f> vmap,
     dst.ptr(y)[x] = renderPoint(point, normal, pixel, lightPos);
 }
 
-void renderScene(const cv::cuda::GpuMat vmap, const cv::cuda::GpuMat nmap, cv::cuda::GpuMat &image)
+void renderScene(const cv::cuda::GpuMat vmap, const cv::cuda::GpuMat nmap, cv::cuda::GpuMat& image)
 {
     if (image.empty())
         image.create(vmap.size(), CV_8UC4);
@@ -91,7 +91,7 @@ __global__ void computeNormalKernel(cv::cuda::PtrStepSz<Eigen::Vector4f> vmap, c
     nmap.ptr(y)[x](3) = 1.f;
 }
 
-void computeNormal(const cv::cuda::GpuMat vmap, cv::cuda::GpuMat &nmap)
+void computeNormal(const cv::cuda::GpuMat vmap, cv::cuda::GpuMat& nmap)
 {
     if (nmap.empty())
         nmap.create(vmap.size(), vmap.type());

@@ -34,7 +34,7 @@ struct MapStruct
     bool empty();
     void reset();
     void create(int nEntry, int nBucket, int nVBlock, float voxelSize, float truncationDist);
-    void getVisibleBlockCount(uint &hostData);
+    void getVisibleBlockCount(uint& hostData);
     void resetVisibleBlockCount();
 
     int nBucket;
@@ -43,14 +43,14 @@ struct MapStruct
     float voxelSize;
     float truncationDist;
 
-    int *heap;
-    int *excessPtr;
-    int *heapPtr;
-    int *bucketMutex;
-    Voxel *voxelBlock;
-    HashEntry *hashTable;
-    HashEntry *visibleTable;
-    uint *visibleBlockNum;
+    int* heap;
+    int* excessPtr;
+    int* heapPtr;
+    int* bucketMutex;
+    Voxel* voxelBlock;
+    HashEntry* hashTable;
+    HashEntry* visibleTable;
+    uint* visibleBlockNum;
 };
 
 } // namespace voxelization

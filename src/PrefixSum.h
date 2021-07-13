@@ -6,7 +6,7 @@ namespace voxelization
 
 template <int TB>
 __device__ __forceinline__ int
-PrefixSum(unsigned int element, unsigned int *sum)
+PrefixSum(unsigned int element, unsigned int* sum)
 {
     __shared__ unsigned int buffer[TB];
     __shared__ unsigned int blockOffset;
