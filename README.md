@@ -5,7 +5,7 @@ Fuse RGB-D images into voxel maps
 
 ## Patch Note
 
-+ 2021-07-12: Python bindings now available
++ 2021-07-12: Python bindings now available [here](https://github.com/xingruiy/py_vmapping.git).
 + 2020-05-06: Added Pangolin for visualization
 
 ## Installation
