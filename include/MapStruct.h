@@ -5,7 +5,7 @@
 #define BLOCK_SIZE_3 512
 #define BLOCK_SIZE_M1 7
 
-namespace voxelization
+namespace vmap
 {
 
 struct Voxel
@@ -53,4 +53,4 @@ struct MapStruct
     uint* visibleBlockNum;
 };
 
-} // namespace voxelization
+} // namespace vmap

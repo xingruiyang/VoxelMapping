@@ -3,7 +3,7 @@
 #include "MapStructFuncs.h"
 #include <opencv2/opencv.hpp>
 
-namespace voxelization
+namespace vmap
 {
 __global__ void resetHashKernel(HashEntry* hashTable, int numEntry)
 {
@@ -91,4 +91,4 @@ bool MapStruct::empty()
     return nBucket == 0;
 }
 
-} // namespace voxelization
+} // namespace vmap

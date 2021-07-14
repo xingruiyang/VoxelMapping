@@ -3,7 +3,7 @@
 #include <cuda_runtime_api.h>
 #include <iostream>
 
-namespace voxelization
+namespace vmap
 {
 
 #if defined(__GNUC__)
@@ -30,4 +30,4 @@ __global__ void callDeviceFunctor(const T functor)
     functor();
 }
 
-} // namespace voxelization
+} // namespace vmap

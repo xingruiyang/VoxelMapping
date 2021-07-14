@@ -4,7 +4,7 @@
 #include <opencv2/opencv.hpp>
 #include <sophus/se3.hpp>
 
-namespace voxelization
+namespace vmap
 {
 
 int FuseImage(
@@ -44,4 +44,4 @@ void GetSurfacePoints(
     void* vertex_out, // GPU
     uint triangle_count);
 
-} // namespace voxelization
+} // namespace vmap

@@ -1,7 +1,7 @@
 #pragma once
 #include <cuda_runtime.h>
 
-namespace voxelization
+namespace vmap
 {
 
 template <int TB>
@@ -61,4 +61,4 @@ PrefixSum(unsigned int element, unsigned int* sum)
     return offset;
 }
 
-} // namespace voxelization
+} // namespace vmap

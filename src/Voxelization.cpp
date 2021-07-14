@@ -6,7 +6,7 @@
 
 #define MAX_VERTS_BUFFER 10000000
 
-namespace voxelization
+namespace vmap
 {
 struct Voxelization::VoxelizationImpl
 {
@@ -78,7 +78,7 @@ struct Voxelization::VoxelizationImpl
     inline void fuse_depth(
         cv::cuda::GpuMat depth, const Eigen::Matrix4f& camToWorld)
     {
-        numVisBlock = voxelization::FuseImage(deviceMap, depth, camToWorld, mK);
+        numVisBlock = vmap::FuseImage(deviceMap, depth, camToWorld, mK);
     }
 
     inline void render_scene(
@@ -99,7 +99,7 @@ struct Voxelization::VoxelizationImpl
             worldToCamF, mK);
 
         if (numRdBlocks != 0)
-            voxelization::RenderScene(
+            vmap::RenderScene(
                 deviceMap, vmap, zRangeX, zRangeY, camToWorldF, mK);
     }
 
@@ -111,7 +111,7 @@ struct Voxelization::VoxelizationImpl
     inline uint create_mesh()
     {
         uint num_triangles = 0;
-        voxelization::Polygonize(
+        vmap::Polygonize(
             deviceMap, numVisBlock, num_triangles, verts_gpu, norms_gpu, MAX_VERTS_BUFFER);
         return num_triangles;
     }
@@ -139,7 +139,7 @@ struct Voxelization::VoxelizationImpl
             return std::vector<Eigen::Vector3f>();
         }
 
-        voxelization::GetSurfacePoints(verts_gpu, points_gpu, num_triangles);
+        vmap::GetSurfacePoints(verts_gpu, points_gpu, num_triangles);
         SafeCall(cudaMemcpy(points_cpu, points_gpu, sizeof(float) * num_triangles * 3, cudaMemcpyDeviceToHost));
         return std::vector<Eigen::Vector3f>(
             static_cast<Eigen::Vector3f*>((void*)points_cpu),
@@ -189,4 +189,4 @@ std::vector<Eigen::Vector3f> Voxelization::GetSurfacePoints()
     return impl->GetSurfacePoints();
 }
 
-} // namespace voxelization
+} // namespace vmap

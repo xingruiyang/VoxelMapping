@@ -6,7 +6,7 @@
 #include <opencv2/opencv.hpp>
 #include <sophus/se3.hpp>
 
-namespace voxelization
+namespace vmap
 {
 
 class DatasetLoader
@@ -27,6 +27,6 @@ protected:
     std::unique_ptr<DatasetLoaderImpl> impl;
 };
 
-} // namespace voxelization
+} // namespace vmap
 
 #endif

@@ -1,7 +1,7 @@
 #include "GlobalFuncs.h"
 #include "ImageProc.h"
 
-namespace voxelization
+namespace vmap
 {
 
 __device__ __forceinline__ Eigen::Matrix<uchar, 4, 1> renderPoint(const Eigen::Vector3f& point, const Eigen::Vector3f& normal,
@@ -102,4 +102,4 @@ void computeNormal(const cv::cuda::GpuMat vmap, cv::cuda::GpuMat& nmap)
     computeNormalKernel<<<grid, block>>>(vmap, nmap);
 }
 
-} // namespace voxelization
+} // namespace vmap

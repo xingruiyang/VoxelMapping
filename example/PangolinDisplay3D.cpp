@@ -14,7 +14,7 @@ int main(int argc, char** argv)
         exit(0);
     }
 
-    voxelization::DatasetLoader loader(argv[1]);
+    vmap::DatasetLoader loader(argv[1]);
     loader.loadImages(true);
     loader.loadGroundTruth();
     Eigen::Matrix3f K = loader.loadCalibration();
@@ -22,7 +22,7 @@ int main(int argc, char** argv)
 
     int w = 640;
     int h = 480;
-    voxelization::Voxelization map(w, h, K);
+    vmap::Voxelization map(w, h, K);
 
     cv::Mat depth, color;
     double time;

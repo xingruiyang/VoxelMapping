@@ -9,7 +9,7 @@
 #define RenderingBlockSubSample 8
 #define MaxNumRenderingBlock 1000000
 
-namespace voxelization
+namespace vmap
 {
 
 struct RenderingBlockDelegate
@@ -414,4 +414,4 @@ void RenderScene(
     callDeviceFunctor<<<block, thread>>>(delegate);
 }
 
-} // namespace voxelization
+} // namespace vmap

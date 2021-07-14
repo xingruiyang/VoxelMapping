@@ -4,7 +4,7 @@
 #include "MapStructFuncs.h"
 #include "PrefixSum.h"
 
-namespace voxelization
+namespace vmap
 {
 
 struct CreateBlockLineTracingFunctor
@@ -364,4 +364,4 @@ int FuseImage(MapStruct map,
     return visible_block_count;
 }
 
-} // namespace voxelization
+} // namespace vmap

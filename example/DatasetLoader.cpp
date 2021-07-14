@@ -1,6 +1,6 @@
 #include "DatasetLoader.h"
 
-namespace voxelization
+namespace vmap
 {
 
 struct DatasetLoader::DatasetLoaderImpl
@@ -201,4 +201,4 @@ bool DatasetLoader::GetNext(cv::Mat& depth, cv::Mat& color, double& time, Eigen:
     return impl->GetNext(depth, color, time, camToWorld);
 }
 
-} // namespace voxelization
+} // namespace vmap

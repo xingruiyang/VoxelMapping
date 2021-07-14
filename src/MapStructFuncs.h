@@ -2,7 +2,7 @@
 #include <cuda_runtime_api.h>
 #include <sophus/se3.hpp>
 
-namespace voxelization
+namespace vmap
 {
 
 __device__ __forceinline__ float unpackFloat(short val)
@@ -312,4 +312,4 @@ __device__ __forceinline__ void findVoxel(const Eigen::Vector3i& voxelPos,
         out = &listBlocks[current->ptr + voxelPosToLocalIdx(voxelPos)];
 }
 
-} // namespace voxelization
+} // namespace vmap

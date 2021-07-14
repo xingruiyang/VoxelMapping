@@ -4,10 +4,9 @@
 #include "MapStructFuncs.h"
 #include "PrefixSum.h"
 #include "Voxelization.h"
+#include <curand_kernel.h>
 
-#define MAX_NUM_MESH_TRIANGLES 20000000
-
-namespace voxelization
+namespace vmap
 {
 
 struct BuildVertexArray
@@ -337,4 +336,4 @@ void GetSurfacePoints(
     SafeCall(cudaGetLastError());
 }
 
-} // namespace voxelization
+} // namespace vmap

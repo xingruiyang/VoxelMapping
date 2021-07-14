@@ -1,7 +1,7 @@
 #pragma once
 #include <cuda_runtime_api.h>
 
-namespace voxelization
+namespace vmap
 {
 
 static const __device__ int edgeTable[256] =
@@ -277,4 +277,4 @@ static const __device__ int triTable[256][16] =
      {0, 3, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
      {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}};
 
-} // namespace voxelization
+} // namespace vmap
