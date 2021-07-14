@@ -6,6 +6,10 @@
 #define BLOCK_SIZE 8
 #define BLOCK_SIZE_3 512
 #define BLOCK_SIZE_M1 7
+#define MAX_DEPTH 3.0f
+#define MIN_DEPTH 0.1f
+
+typedef Eigen::Matrix<unsigned char, 3, 1> Vector3b;
 
 namespace vmap
 {
@@ -14,6 +18,13 @@ struct Voxel
 {
     short sdf;
     unsigned char wt;
+};
+
+struct VoxelRGB
+{
+    short sdf;
+    unsigned char wt;
+    Vector3b rgb;
 };
 
 struct HashEntry
@@ -30,6 +41,7 @@ struct RenderingBlock
     Eigen::Vector2f zrange;
 };
 
+template <class TVoxel>
 struct MapStruct
 {
     void release();
@@ -49,7 +61,7 @@ struct MapStruct
     int* excessPtr;
     int* heapPtr;
     int* bucketMutex;
-    Voxel* voxelBlock;
+    TVoxel* voxelBlock;
     HashEntry* hashTable;
     HashEntry* visibleTable;
     uint* visibleBlockNum;
@@ -355,9 +367,10 @@ __device__ __forceinline__ bool findEntry(const Eigen::Vector3i& blockPos, HashE
     return false;
 }
 
+template <class TVoxel>
 __device__ __forceinline__ void findVoxel(const Eigen::Vector3i& voxelPos,
-                                          Voxel*& out, HashEntry* hashTable,
-                                          Voxel* listBlocks, int nBucket)
+                                          TVoxel*& out, HashEntry* hashTable,
+                                          TVoxel* listBlocks, int nBucket)
 {
     HashEntry* current;
     if (findEntry(voxelPosToBlockPos(voxelPos), current, hashTable, nBucket))

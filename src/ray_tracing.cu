@@ -168,8 +168,9 @@ struct FillRenderingBlockFunctor
     }
 };
 
+template <class TVoxel>
 void ProjectRenderingBlocks(
-    MapStruct map,
+    MapStruct<TVoxel> map,
     uint count_visible_block,
     uint& count_rendering_block,
     cv::cuda::GpuMat& zRangeX,
@@ -207,8 +208,8 @@ void ProjectRenderingBlocks(
     delegate.visible_block_count = count_visible_block;
     delegate.rendering_block_count = count_device;
     delegate.listRenderingBlock = listRenderingBlock;
-    delegate.depthMax = 3.0f;
-    delegate.depthMin = 0.3f;
+    delegate.depthMax = MAX_DEPTH;
+    delegate.depthMin = MIN_DEPTH;
     delegate.voxelSize = map.voxelSize;
 
     dim3 thread = dim3(1024);
@@ -232,6 +233,26 @@ void ProjectRenderingBlocks(
     (cudaFree((void*)count_device));
 }
 
+template void ProjectRenderingBlocks<Voxel>(
+    MapStruct<Voxel> map,
+    uint count_visible_block,
+    uint& count_rendering_block,
+    cv::cuda::GpuMat& zRangeX,
+    cv::cuda::GpuMat& zRangeY,
+    RenderingBlock* listRenderingBlock,
+    const Eigen::Matrix4f& worldToCam,
+    const Eigen::Matrix3f& K);
+template void ProjectRenderingBlocks<VoxelRGB>(
+    MapStruct<VoxelRGB> map,
+    uint count_visible_block,
+    uint& count_rendering_block,
+    cv::cuda::GpuMat& zRangeX,
+    cv::cuda::GpuMat& zRangeY,
+    RenderingBlock* listRenderingBlock,
+    const Eigen::Matrix4f& worldToCam,
+    const Eigen::Matrix3f& K);
+
+template <class TVoxel>
 struct MapRenderingDelegate
 {
     int width, height;
@@ -243,14 +264,14 @@ struct MapRenderingDelegate
     Eigen::Transform<float, 3, Eigen::Affine> pose, Tinv;
 
     HashEntry* hashTable;
-    Voxel* listBlock;
+    TVoxel* listBlock;
     int nBucket;
     float voxelSizeInv;
     float raytraceStep;
 
     __device__ __forceinline__ float read_sdf(const Eigen::Vector3f& pt3d, bool& valid) const
     {
-        Voxel* voxel = NULL;
+        TVoxel* voxel = NULL;
         findVoxel(floor(pt3d), voxel, hashTable, listBlock, nBucket);
         if (voxel && voxel->wt != 0)
         {
@@ -377,15 +398,16 @@ struct MapRenderingDelegate
     }
 };
 
+template <class TVoxel>
 void RenderScene(
-    MapStruct map, cv::cuda::GpuMat vert_map,
+    MapStruct<TVoxel> map, cv::cuda::GpuMat vert_map,
     cv::cuda::GpuMat zRangeX, cv::cuda::GpuMat zRangeY,
     const Eigen::Matrix4f& camToWorld, const Eigen::Matrix3f& K)
 {
     const int cols = vert_map.cols;
     const int rows = vert_map.rows;
 
-    MapRenderingDelegate delegate;
+    MapRenderingDelegate<TVoxel> delegate;
 
     Eigen::Matrix4f worldToCam = camToWorld.inverse();
 
@@ -411,5 +433,14 @@ void RenderScene(
 
     callDeviceFunctor<<<block, thread>>>(delegate);
 }
+
+template void RenderScene<Voxel>(
+    MapStruct<Voxel> map, cv::cuda::GpuMat vert_map,
+    cv::cuda::GpuMat zRangeX, cv::cuda::GpuMat zRangeY,
+    const Eigen::Matrix4f& camToWorld, const Eigen::Matrix3f& K);
+template void RenderScene<VoxelRGB>(
+    MapStruct<VoxelRGB> map, cv::cuda::GpuMat vert_map,
+    cv::cuda::GpuMat zRangeX, cv::cuda::GpuMat zRangeY,
+    const Eigen::Matrix4f& camToWorld, const Eigen::Matrix3f& K);
 
 } // namespace vmap

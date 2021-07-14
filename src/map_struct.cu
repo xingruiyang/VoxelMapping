@@ -26,7 +26,8 @@ __global__ void resetHeapKernel(int* heap, int* heapPtr, int numBlock)
     heap[index] = numBlock - index - 1;
 }
 
-void MapStruct::reset()
+template <class TVoxel>
+void MapStruct<TVoxel>::reset()
 {
     dim3 block(1024);
     dim3 grid(cv::divUp(nEntry, block.x));
@@ -37,10 +38,11 @@ void MapStruct::reset()
 
     SafeCall(cudaMemset(excessPtr, 0, sizeof(int)));
     SafeCall(cudaMemset(bucketMutex, 0, sizeof(int) * nBucket));
-    SafeCall(cudaMemset(voxelBlock, 0, sizeof(Voxel) * BLOCK_SIZE_3 * nVBlock));
+    SafeCall(cudaMemset(voxelBlock, 0, sizeof(TVoxel) * BLOCK_SIZE_3 * nVBlock));
 }
 
-void MapStruct::create(
+template <class TVoxel>
+void MapStruct<TVoxel>::create(
     int nEntry,
     int nBucket,
     int nVBlock,
@@ -54,7 +56,7 @@ void MapStruct::create(
     SafeCall(cudaMalloc((void**)&heap, sizeof(int) * nVBlock));
     SafeCall(cudaMalloc((void**)&hashTable, sizeof(HashEntry) * nEntry));
     SafeCall(cudaMalloc((void**)&visibleTable, sizeof(HashEntry) * nEntry));
-    SafeCall(cudaMalloc((void**)&voxelBlock, sizeof(Voxel) * nVBlock * BLOCK_SIZE_3));
+    SafeCall(cudaMalloc((void**)&voxelBlock, sizeof(TVoxel) * nVBlock * BLOCK_SIZE_3));
 
     this->nEntry = nEntry;
     this->nBucket = nBucket;
@@ -63,7 +65,8 @@ void MapStruct::create(
     this->truncationDist = truncationDist;
 }
 
-void MapStruct::release()
+template <class TVoxel>
+void MapStruct<TVoxel>::release()
 {
     SafeCall(cudaFree((void*)heap));
     SafeCall(cudaFree((void*)heapPtr));
@@ -75,19 +78,25 @@ void MapStruct::release()
     SafeCall(cudaFree((void*)visibleTable));
 }
 
-void MapStruct::getVisibleBlockCount(uint& hostData)
+template <class TVoxel>
+void MapStruct<TVoxel>::getVisibleBlockCount(uint& hostData)
 {
     SafeCall(cudaMemcpy(&hostData, visibleBlockNum, sizeof(uint), cudaMemcpyDeviceToHost));
 }
 
-void MapStruct::resetVisibleBlockCount()
+template <class TVoxel>
+void MapStruct<TVoxel>::resetVisibleBlockCount()
 {
     SafeCall(cudaMemset(visibleBlockNum, 0, sizeof(uint)));
 }
 
-bool MapStruct::empty()
+template <class TVoxel>
+bool MapStruct<TVoxel>::empty()
 {
     return nBucket == 0;
 }
+
+template class MapStruct<Voxel>;
+template class MapStruct<VoxelRGB>;
 
 } // namespace vmap

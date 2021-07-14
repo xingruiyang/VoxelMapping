@@ -6,6 +6,7 @@
 namespace vmap
 {
 
+template <class TVoxel>
 struct BuildVertexArray
 {
     Eigen::Vector3f* triangles;
@@ -15,7 +16,7 @@ struct BuildVertexArray
     Eigen::Vector3f* surfaceNormal;
 
     HashEntry* hashTable;
-    Voxel* listBlocks;
+    TVoxel* listBlocks;
     int nEntry;
     int nBucket;
     float voxelSize;
@@ -50,7 +51,7 @@ struct BuildVertexArray
 
     __device__ __forceinline__ float read_sdf(Eigen::Vector3f pt, bool& valid) const
     {
-        Voxel* voxel = NULL;
+        TVoxel* voxel = NULL;
         findVoxel(floor(pt), voxel, hashTable, listBlocks, nBucket);
         if (voxel && voxel->wt != 0)
         {
@@ -241,13 +242,15 @@ struct BuildVertexArray
     }         // __device__ __forceinline__ void operator()() const
 };            // struct BuildVertexArray
 
-__global__ void selectBlockKernel(BuildVertexArray bva)
+template <class TVoxel>
+__global__ void selectBlockKernel(BuildVertexArray<TVoxel> bva)
 {
     bva.select_blocks();
 }
 
+template <class TVoxel>
 void Polygonize(
-    MapStruct map_struct,
+    MapStruct<TVoxel> map_struct,
     uint& block_count,
     uint& triangle_count,
     void* vertexBuffer, // GPU
@@ -261,7 +264,7 @@ void Polygonize(
     cudaMemset(cuda_block_count, 0, sizeof(uint));
     cudaMemset(cuda_triangle_count, 0, sizeof(uint));
 
-    BuildVertexArray bva;
+    BuildVertexArray<TVoxel> bva;
     bva.block_array = map_struct.visibleTable;
     bva.block_count = cuda_block_count;
     bva.triangle_count = cuda_triangle_count;
@@ -277,7 +280,7 @@ void Polygonize(
     dim3 thread(1024);
     dim3 block = dim3(cv::divUp(map_struct.nEntry, thread.x));
 
-    selectBlockKernel<<<block, thread>>>(bva);
+    selectBlockKernel<TVoxel><<<block, thread>>>(bva);
 
     SafeCall(cudaDeviceSynchronize());
     SafeCall(cudaGetLastError());
@@ -300,6 +303,13 @@ void Polygonize(
     SafeCall(cudaFree(cuda_block_count));
     SafeCall(cudaFree(cuda_triangle_count));
 }
+
+template void Polygonize<Voxel>(
+    MapStruct<Voxel> map_struct, uint& block_count, uint& triangle_count,
+    void* vertexBuffer, void* normalBuffer, size_t bufferSize);
+template void Polygonize<VoxelRGB>(
+    MapStruct<VoxelRGB> map_struct, uint& block_count, uint& triangle_count,
+    void* vertexBuffer, void* normalBuffer, size_t bufferSize);
 
 __global__ void compute_surface_point_kernel(
     Eigen::Vector3f* verts_in,

@@ -9,14 +9,24 @@
 namespace vmap
 {
 
+template <class TVoxel>
 int FuseImage(
-    MapStruct map,
+    MapStruct<TVoxel> map,
     const cv::cuda::GpuMat depth,
     const Eigen::Matrix4f& camToWorld,
     const Eigen::Matrix3f& K);
 
+template <class TVoxel>
+int FuseDepthAndImage(
+    MapStruct<TVoxel> map,
+    const cv::cuda::GpuMat image,
+    const cv::cuda::GpuMat depth,
+    const Eigen::Matrix4f& camToWorld,
+    const Eigen::Matrix3f& K);
+
+template <class TVoxel>
 void ProjectRenderingBlocks(
-    MapStruct map,
+    MapStruct<TVoxel> map,
     uint count_visible_block,
     uint& count_rendering_block,
     cv::cuda::GpuMat& zrange_x,
@@ -25,16 +35,18 @@ void ProjectRenderingBlocks(
     const Eigen::Matrix4f& worldToCam,
     const Eigen::Matrix3f& K);
 
+template <class TVoxel>
 void RenderScene(
-    MapStruct map,
+    MapStruct<TVoxel> map,
     cv::cuda::GpuMat vmap,
     cv::cuda::GpuMat zRangeX,
     cv::cuda::GpuMat zRangeY,
     const Eigen::Matrix4f& camToWorld,
     const Eigen::Matrix3f& K);
 
+template <class TVoxel>
 void Polygonize(
-    MapStruct map,
+    MapStruct<TVoxel> map,
     uint& block_count,
     uint& triangle_count,
     void* vertex_out,

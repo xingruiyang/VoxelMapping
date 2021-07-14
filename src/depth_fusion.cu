@@ -136,6 +136,7 @@ struct CreateBlockLineTracingFunctor
     }
 };
 
+template <class TVoxel>
 struct CheckEntryVisibilityFunctor
 {
     HashEntry* hashTable;
@@ -145,7 +146,7 @@ struct CheckEntryVisibilityFunctor
 
     int* heap;
     int* heapPtr;
-    Voxel* voxelBlock;
+    TVoxel* voxelBlock;
     int cols, rows;
     float fx, fy;
     float cx, cy;
@@ -202,9 +203,10 @@ struct CheckEntryVisibilityFunctor
     }
 };
 
+template <class TVoxel>
 struct DepthFusionFunctor
 {
-    Voxel* listBlock;
+    TVoxel* listBlock;
     HashEntry* visible_blocks;
 
     Eigen::Transform<float, 3, Eigen::Affine> Tinv;
@@ -252,7 +254,7 @@ struct DepthFusionFunctor
 
             sdf = fmin(1.0f, sdf / truncationDist);
             const int localIdx = localPosToLocalIdx(localPos);
-            Voxel& voxel = listBlock[current.ptr + localIdx];
+            TVoxel& voxel = listBlock[current.ptr + localIdx];
 
             auto oldSDF = unpackFloat(voxel.sdf);
             auto oldWT = voxel.wt;
@@ -261,16 +263,18 @@ struct DepthFusionFunctor
             {
                 voxel.sdf = packFloat(sdf);
                 voxel.wt = 1;
-                continue;
             }
-
-            voxel.sdf = packFloat((oldSDF * oldWT + sdf * 1) / (oldWT + 1));
-            voxel.wt = min(255, oldWT + 1);
+            else
+            {
+                voxel.sdf = packFloat((oldSDF * oldWT + sdf * 1) / (oldWT + 1));
+                voxel.wt = min(255, oldWT + 1);
+            }
         }
     }
 };
 
-int FuseImage(MapStruct map,
+template <class TVoxel>
+int FuseImage(MapStruct<TVoxel> map,
               const cv::cuda::GpuMat depth,
               const Eigen::Matrix4f& camToWorld,
               const Eigen::Matrix3f& K)
@@ -302,14 +306,18 @@ int FuseImage(MapStruct map,
     bfunctor.invfy = invfy;
     bfunctor.cx = cx;
     bfunctor.cy = cy;
-    bfunctor.depthMin = 0.3f;
-    bfunctor.depthMax = 3.0f;
+    bfunctor.depthMin = MIN_DEPTH;
+    bfunctor.depthMax = MAX_DEPTH;
     bfunctor.T = camToWorld;
 
     callDeviceFunctor<<<block, thread>>>(bfunctor);
+
+    SafeCall(cudaDeviceSynchronize());
+    SafeCall(cudaGetLastError());
+
     map.resetVisibleBlockCount();
 
-    CheckEntryVisibilityFunctor cfunctor;
+    CheckEntryVisibilityFunctor<TVoxel> cfunctor;
     cfunctor.hashTable = map.hashTable;
     cfunctor.voxelBlock = map.voxelBlock;
     cfunctor.visibleEntry = map.visibleTable;
@@ -324,8 +332,8 @@ int FuseImage(MapStruct map,
     cfunctor.fy = fy;
     cfunctor.cx = cx;
     cfunctor.cy = cy;
-    cfunctor.depthMin = 0.3f;
-    cfunctor.depthMax = 3.0f;
+    cfunctor.depthMin = MIN_DEPTH;
+    cfunctor.depthMax = MAX_DEPTH;
     cfunctor.voxelSize = map.voxelSize;
     cfunctor.nEntry = map.nEntry;
 
@@ -334,12 +342,15 @@ int FuseImage(MapStruct map,
 
     callDeviceFunctor<<<block, thread>>>(cfunctor);
 
+    SafeCall(cudaDeviceSynchronize());
+    SafeCall(cudaGetLastError());
+
     uint visible_block_count = 0;
     map.getVisibleBlockCount(visible_block_count);
     if (visible_block_count == 0)
         return 0;
 
-    DepthFusionFunctor functor;
+    DepthFusionFunctor<TVoxel> functor;
     functor.listBlock = map.voxelBlock;
     functor.visible_blocks = map.visibleTable;
     functor.Tinv = camToWorld.inverse().cast<float>();
@@ -347,8 +358,8 @@ int FuseImage(MapStruct map,
     functor.fy = fy;
     functor.cx = cx;
     functor.cy = cy;
-    functor.depthMin = 0.3f;
-    functor.depthMax = 3.0f;
+    functor.depthMin = MIN_DEPTH;
+    functor.depthMax = MAX_DEPTH;
     functor.truncationDist = map.truncationDist;
     functor.nEntry = map.nEntry;
     functor.voxelSize = map.voxelSize;
@@ -359,7 +370,202 @@ int FuseImage(MapStruct map,
     block = dim3(visible_block_count);
 
     callDeviceFunctor<<<block, thread>>>(functor);
+
+    SafeCall(cudaDeviceSynchronize());
+    SafeCall(cudaGetLastError());
+
     return visible_block_count;
 }
+
+template int FuseImage<Voxel>(MapStruct<Voxel> map, const cv::cuda::GpuMat depth,
+                              const Eigen::Matrix4f& camToWorld, const Eigen::Matrix3f& K);
+template int FuseImage<VoxelRGB>(MapStruct<VoxelRGB> map, const cv::cuda::GpuMat depth,
+                                 const Eigen::Matrix4f& camToWorld, const Eigen::Matrix3f& K);
+
+template <class TVoxel>
+struct ImageFusionFunctor
+{
+    TVoxel* listBlock;
+    HashEntry* visible_blocks;
+
+    Eigen::Transform<float, 3, Eigen::Affine> Tinv;
+    float fx, fy;
+    float cx, cy;
+    float depthMin;
+    float depthMax;
+
+    float truncationDist;
+    int nEntry;
+    float voxelSize;
+    uint count_visible_block;
+
+    cv::cuda::PtrStepSz<float> depth;
+    cv::cuda::PtrStepSz<Vector3b> image;
+
+    __device__ __forceinline__ void operator()() const
+    {
+        if (blockIdx.x >= nEntry || blockIdx.x >= count_visible_block)
+            return;
+
+        HashEntry& current = visible_blocks[blockIdx.x];
+        if (current.ptr == -1)
+            return;
+
+        Eigen::Vector3i voxelPos = blockPosToVoxelPos(current.pos);
+
+#pragma unroll
+        for (int blockIdxZ = 0; blockIdxZ < 8; ++blockIdxZ)
+        {
+            Eigen::Vector3i localPos = Eigen::Vector3i(threadIdx.x, threadIdx.y, blockIdxZ);
+            Eigen::Vector3f pt = Tinv * voxelPosToWorldPt(voxelPos + localPos, voxelSize);
+
+            int u = __float2int_rd(fx * pt(0) / pt(2) + cx + 0.5);
+            int v = __float2int_rd(fy * pt(1) / pt(2) + cy + 0.5);
+            if (u < 0 || v < 0 || u > depth.cols - 1 || v > depth.rows - 1)
+                continue;
+
+            float dist = depth.ptr(v)[u];
+            if (isnan(dist) || dist > depthMax || dist < depthMin)
+                continue;
+
+            float sdf = dist - pt(2);
+            if (sdf < -truncationDist)
+                continue;
+
+            sdf = fmin(1.0f, sdf / truncationDist);
+            const int localIdx = localPosToLocalIdx(localPos);
+            TVoxel& voxel = listBlock[current.ptr + localIdx];
+
+            auto oldWT = voxel.wt;
+
+            if (oldWT == 0)
+            {
+                voxel.sdf = packFloat(sdf);
+                voxel.wt = 1;
+                voxel.rgb = image.ptr(v)[u];
+            }
+            else
+            {
+                auto oldSDF = unpackFloat(voxel.sdf);
+                Vector3b oldRGB = voxel.rgb;
+                Eigen::Vector3f RGB = image.ptr(v)[u].cast<float>();
+                voxel.sdf = packFloat((oldSDF * oldWT + sdf * 1) / (oldWT + 1));
+                voxel.wt = min(255, oldWT + 1);
+                voxel.rgb = (0.7f * oldRGB.cast<float>() + 0.3f * RGB).cast<unsigned char>();
+            }
+        }
+    }
+};
+
+template <class TVoxel>
+int FuseDepthAndImage(
+    MapStruct<TVoxel> map,
+    const cv::cuda::GpuMat image,
+    const cv::cuda::GpuMat depth,
+    const Eigen::Matrix4f& camToWorld,
+    const Eigen::Matrix3f& K)
+{
+    float fx = K(0, 0);
+    float fy = K(1, 1);
+    float cx = K(0, 2);
+    float cy = K(1, 2);
+    float invfx = 1.0 / K(0, 0);
+    float invfy = 1.0 / K(1, 1);
+    const int cols = depth.cols;
+    const int rows = depth.rows;
+
+    dim3 thread(8, 8);
+    dim3 block(cv::divUp(cols, thread.x), cv::divUp(rows, thread.y));
+
+    CreateBlockLineTracingFunctor bfunctor;
+    bfunctor.heap = map.heap;
+    bfunctor.heapPtr = map.heapPtr;
+    bfunctor.hashTable = map.hashTable;
+    bfunctor.bucketMutex = map.bucketMutex;
+    bfunctor.excessPtr = map.excessPtr;
+    bfunctor.nEntry = map.nEntry;
+    bfunctor.nBucket = map.nBucket;
+    bfunctor.voxelSize = map.voxelSize;
+    bfunctor.truncDistHalf = map.truncationDist * 0.5;
+    bfunctor.depth = depth;
+    bfunctor.invfx = invfx;
+    bfunctor.invfy = invfy;
+    bfunctor.cx = cx;
+    bfunctor.cy = cy;
+    bfunctor.depthMin = MIN_DEPTH;
+    bfunctor.depthMax = MAX_DEPTH;
+    bfunctor.T = camToWorld;
+
+    callDeviceFunctor<<<block, thread>>>(bfunctor);
+
+    SafeCall(cudaDeviceSynchronize());
+    SafeCall(cudaGetLastError());
+
+    map.resetVisibleBlockCount();
+
+    CheckEntryVisibilityFunctor<TVoxel> cfunctor;
+    cfunctor.hashTable = map.hashTable;
+    cfunctor.voxelBlock = map.voxelBlock;
+    cfunctor.visibleEntry = map.visibleTable;
+    cfunctor.visibleEntryCount = map.visibleBlockNum;
+    cfunctor.heap = map.heap;
+    cfunctor.heapPtr = map.heapPtr;
+    cfunctor.nVBlock = map.nVBlock;
+    cfunctor.Tinv = camToWorld.inverse().cast<float>();
+    cfunctor.cols = cols;
+    cfunctor.rows = rows;
+    cfunctor.fx = fx;
+    cfunctor.fy = fy;
+    cfunctor.cx = cx;
+    cfunctor.cy = cy;
+    cfunctor.depthMin = MIN_DEPTH;
+    cfunctor.depthMax = MAX_DEPTH;
+    cfunctor.voxelSize = map.voxelSize;
+    cfunctor.nEntry = map.nEntry;
+
+    thread = dim3(1024);
+    block = dim3(cv::divUp(map.nEntry, thread.x));
+
+    callDeviceFunctor<<<block, thread>>>(cfunctor);
+
+    SafeCall(cudaDeviceSynchronize());
+    SafeCall(cudaGetLastError());
+
+    uint visible_block_count = 0;
+    map.getVisibleBlockCount(visible_block_count);
+    if (visible_block_count == 0)
+        return 0;
+
+    ImageFusionFunctor<TVoxel> functor;
+    functor.listBlock = map.voxelBlock;
+    functor.visible_blocks = map.visibleTable;
+    functor.Tinv = camToWorld.inverse().cast<float>();
+    functor.fx = fx;
+    functor.fy = fy;
+    functor.cx = cx;
+    functor.cy = cy;
+    functor.depthMin = MIN_DEPTH;
+    functor.depthMax = MAX_DEPTH;
+    functor.truncationDist = map.truncationDist;
+    functor.nEntry = map.nEntry;
+    functor.voxelSize = map.voxelSize;
+    functor.count_visible_block = visible_block_count;
+    functor.depth = depth;
+    functor.image = image;
+
+    thread = dim3(8, 8);
+    block = dim3(visible_block_count);
+
+    callDeviceFunctor<<<block, thread>>>(functor);
+
+    SafeCall(cudaDeviceSynchronize());
+    SafeCall(cudaGetLastError());
+
+    return visible_block_count;
+}
+
+template int FuseDepthAndImage<VoxelRGB>(MapStruct<VoxelRGB> map, const cv::cuda::GpuMat image,
+                                         const cv::cuda::GpuMat depth, const Eigen::Matrix4f& camToWorld,
+                                         const Eigen::Matrix3f& K);
 
 } // namespace vmap

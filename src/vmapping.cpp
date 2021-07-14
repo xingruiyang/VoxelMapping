@@ -12,7 +12,7 @@ struct VoxelMapping::VoxelizationImpl
     int width;
     int height;
     Eigen::Matrix3f mK;
-    MapStruct deviceMap;
+    MapStruct<Voxel> deviceMap;
 
     // for map udate
     uint numVisBlock;
