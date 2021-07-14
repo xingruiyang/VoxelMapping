@@ -1,9 +1,61 @@
-#pragma once
-#include <cuda_runtime_api.h>
-#include <sophus/se3.hpp>
+#ifndef VMAPPING_INCLUDE_MAP_STRUCT_H
+#define VMAPPING_INCLUDE_MAP_STRUCT_H
+
+#include <Eigen/Dense>
+
+#define BLOCK_SIZE 8
+#define BLOCK_SIZE_3 512
+#define BLOCK_SIZE_M1 7
 
 namespace vmap
 {
+
+struct Voxel
+{
+    short sdf;
+    unsigned char wt;
+};
+
+struct HashEntry
+{
+    int ptr;
+    int offset;
+    Eigen::Vector3i pos;
+};
+
+struct RenderingBlock
+{
+    Eigen::Matrix<short, 2, 1> upper_left;
+    Eigen::Matrix<short, 2, 1> lower_right;
+    Eigen::Vector2f zrange;
+};
+
+struct MapStruct
+{
+    void release();
+    bool empty();
+    void reset();
+    void create(int nEntry, int nBucket, int nVBlock, float voxelSize, float truncationDist);
+    void getVisibleBlockCount(uint& hostData);
+    void resetVisibleBlockCount();
+
+    int nBucket;
+    int nEntry;
+    int nVBlock;
+    float voxelSize;
+    float truncationDist;
+
+    int* heap;
+    int* excessPtr;
+    int* heapPtr;
+    int* bucketMutex;
+    Voxel* voxelBlock;
+    HashEntry* hashTable;
+    HashEntry* visibleTable;
+    uint* visibleBlockNum;
+};
+
+#ifdef __CUDACC__
 
 __device__ __forceinline__ float unpackFloat(short val)
 {
@@ -312,4 +364,8 @@ __device__ __forceinline__ void findVoxel(const Eigen::Vector3i& voxelPos,
         out = &listBlocks[current->ptr + voxelPosToLocalIdx(voxelPos)];
 }
 
+#endif
+
 } // namespace vmap
+
+#endif

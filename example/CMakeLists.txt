@@ -6,8 +6,8 @@ message(CHECK_START "Looking for Pangolin")
 if(${Pangolin_FOUND})
     message(CHECK_PASS "Found, will build examples")
     add_executable(pangolin_example
-        PangolinDisplay3D.cpp
-        DatasetLoader.cpp
+        pangolin_display_3d.cpp
+        dataset_loader.cpp
     )
 
     target_link_libraries(pangolin_example

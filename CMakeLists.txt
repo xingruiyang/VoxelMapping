@@ -14,12 +14,12 @@ find_package(Eigen3 3.3 REQUIRED)
 find_package(OpenCV 3.4 REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
-    src/MapStruct.cu
-    src/DepthFusion.cu
-    src/RayTracing.cu
-    src/ImageProc.cu
-    src/Meshification.cu
-    src/Voxelization.cpp
+    src/vmapping.cpp
+    src/image_proc.cu
+    src/map_struct.cu
+    src/ray_tracing.cu
+    src/depth_fusion.cu
+    src/marching_cubes.cu
 )
 
 target_include_directories(${PROJECT_NAME}
@@ -27,7 +27,6 @@ PUBLIC
     ${CUDA_INCLUDE_DIRS}
     ${Sophus_INCLUDE_DIRS}
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/src>
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/util>
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include/>
     $<INSTALL_INTERFACE:include/>
 )

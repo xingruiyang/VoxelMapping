@@ -1,6 +1,5 @@
-#include "GlobalFuncs.h"
-#include "MapStruct.h"
-#include "MapStructFuncs.h"
+#include "cuda_utils.h"
+#include "map_struct.h"
 #include <opencv2/opencv.hpp>
 
 namespace vmap

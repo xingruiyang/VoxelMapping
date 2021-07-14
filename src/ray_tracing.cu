@@ -1,8 +1,6 @@
-#include "GlobalFuncs.h"
-#include "GlobalMapFuncs.h"
-#include "MapStruct.h"
-#include "MapStructFuncs.h"
-#include "PrefixSum.h"
+#include "cuda_utils.h"
+#include "device_functions.h"
+#include "map_struct.h"
 
 #define RenderingBlockSizeX 16
 #define RenderingBlockSizeY 16
@@ -238,7 +236,7 @@ struct MapRenderingDelegate
 {
     int width, height;
     // MapStruct map;
-    mutable cv::cuda::PtrStep<Eigen::Vector4f> vmap;
+    mutable cv::cuda::PtrStep<Eigen::Vector4f> vert_map;
     cv::cuda::PtrStepSz<float> zRangeX;
     cv::cuda::PtrStepSz<float> zRangeY;
     float invfx, invfy, cx, cy;
@@ -308,7 +306,7 @@ struct MapRenderingDelegate
         if (x >= width || y >= height)
             return;
 
-        vmap.ptr(y)[x](0) = __int_as_float(0x7fffffff);
+        vert_map.ptr(y)[x](0) = __int_as_float(0x7fffffff);
 
         int u = __float2int_rd((float)x / 8);
         int v = __float2int_rd((float)y / 8);
@@ -374,18 +372,18 @@ struct MapRenderingDelegate
         if (ptFound)
         {
             result = Tinv * (result / voxelSizeInv);
-            vmap.ptr(y)[x] = Eigen::Vector4f(result(0), result(1), result(2), 1.0f);
+            vert_map.ptr(y)[x] = Eigen::Vector4f(result(0), result(1), result(2), 1.0f);
         }
     }
 };
 
 void RenderScene(
-    MapStruct map, cv::cuda::GpuMat vmap,
+    MapStruct map, cv::cuda::GpuMat vert_map,
     cv::cuda::GpuMat zRangeX, cv::cuda::GpuMat zRangeY,
     const Eigen::Matrix4f& camToWorld, const Eigen::Matrix3f& K)
 {
-    const int cols = vmap.cols;
-    const int rows = vmap.rows;
+    const int cols = vert_map.cols;
+    const int rows = vert_map.rows;
 
     MapRenderingDelegate delegate;
 
@@ -393,7 +391,7 @@ void RenderScene(
 
     delegate.width = cols;
     delegate.height = rows;
-    delegate.vmap = vmap;
+    delegate.vert_map = vert_map;
     delegate.zRangeX = zRangeX;
     delegate.zRangeY = zRangeY;
     delegate.invfx = 1.0 / K(0, 0);

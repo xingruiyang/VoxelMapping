@@ -1,14 +1,13 @@
-#include "Voxelization.h"
-#include "GlobalFuncs.h"
-#include "GlobalMapFuncs.h"
-#include "MapStruct.h"
-#include <cuda_runtime.h>
+#include "vmapping.h"
+#include "cuda_utils.h"
+#include "device_functions.h"
+#include "map_struct.h"
 
 #define MAX_VERTS_BUFFER 10000000
 
 namespace vmap
 {
-struct Voxelization::VoxelizationImpl
+struct VoxelMapping::VoxelizationImpl
 {
     int width;
     int height;
@@ -147,44 +146,44 @@ struct Voxelization::VoxelizationImpl
     }
 };
 
-Voxelization::Voxelization(int w, int h, const Eigen::Matrix3f& K)
+VoxelMapping::VoxelMapping(int w, int h, const Eigen::Matrix3f& K)
     : impl(new VoxelizationImpl(w, h, K))
 {
 }
 
-Voxelization::~Voxelization() = default;
+VoxelMapping::~VoxelMapping() = default;
 
-void Voxelization::CreateMap(int numEntries, int numVoxels, float voxelSize)
+void VoxelMapping::CreateMap(int numEntries, int numVoxels, float voxelSize)
 {
     impl->create_map(numEntries, numVoxels, voxelSize);
 }
 
-void Voxelization::FuseDepth(cv::cuda::GpuMat depth, const Eigen::Matrix4f& camToWorld)
+void VoxelMapping::FuseDepth(cv::cuda::GpuMat depth, const Eigen::Matrix4f& camToWorld)
 {
     impl->fuse_depth(depth, camToWorld);
 }
 
-void Voxelization::FuseDepthAndImage(cv::Mat rgb, cv::Mat depth, const Eigen::Matrix4f& camToWorld)
+void VoxelMapping::FuseDepthAndImage(cv::Mat rgb, cv::Mat depth, const Eigen::Matrix4f& camToWorld)
 {
     fprintf(stderr, "%s(%d) Not implemented yet\n", __FILE__, __LINE__);
 }
 
-void Voxelization::RenderScene(cv::cuda::GpuMat& vmap, const Eigen::Matrix4f& camToWorld)
+void VoxelMapping::RenderScene(cv::cuda::GpuMat& vmap, const Eigen::Matrix4f& camToWorld)
 {
     impl->render_scene(vmap, camToWorld);
 }
 
-void Voxelization::reset()
+void VoxelMapping::reset()
 {
     impl->reset();
 }
 
-int Voxelization::Polygonize(float*& vertex_out, float*& normal_out)
+int VoxelMapping::Polygonize(float*& vertex_out, float*& normal_out)
 {
     return impl->get_verts_cpu(vertex_out, normal_out);
 }
 
-std::vector<Eigen::Vector3f> Voxelization::GetSurfacePoints()
+std::vector<Eigen::Vector3f> VoxelMapping::GetSurfacePoints()
 {
     return impl->GetSurfacePoints();
 }

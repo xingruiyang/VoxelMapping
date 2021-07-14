@@ -1,5 +1,7 @@
-#pragma once
-#include "MapStruct.h"
+#ifndef VMAPPING_INCLUDE_DEVICE_FUNCTIONS_H
+#define VMAPPING_INCLUDE_DEVICE_FUNCTIONS_H
+
+#include "map_struct.h"
 #include <Eigen/Core>
 #include <opencv2/opencv.hpp>
 #include <sophus/se3.hpp>
@@ -45,3 +47,5 @@ void GetSurfacePoints(
     uint triangle_count);
 
 } // namespace vmap
+
+#endif

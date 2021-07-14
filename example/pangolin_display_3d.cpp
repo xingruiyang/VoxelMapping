@@ -1,10 +1,8 @@
+#include "dataset_loader.h"
+#include "image_proc.h"
+#include "vmapping.h"
 #include <assert.h>
 #include <pangolin/pangolin.h>
-// #include <pangolin/gl/glcuda.h>
-// #include <pangolin/gl/glvbo.h>
-#include "DatasetLoader.h"
-#include "ImageProc.h"
-#include "Voxelization.h"
 
 int main(int argc, char** argv)
 {
@@ -22,7 +20,7 @@ int main(int argc, char** argv)
 
     int w = 640;
     int h = 480;
-    vmap::Voxelization map(w, h, K);
+    vmap::VoxelMapping map(w, h, K);
 
     cv::Mat depth, color;
     double time;

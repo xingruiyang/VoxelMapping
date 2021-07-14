@@ -1,4 +1,6 @@
-#pragma once
+#ifndef VMAPPING_INCLUDE_VMAPPING_H
+#define VMAPPING_INCLUDE_VMAPPING_H
+
 #include <Eigen/Core>
 #include <memory>
 #include <opencv2/opencv.hpp>
@@ -6,11 +8,11 @@
 
 namespace vmap
 {
-class Voxelization
+class VoxelMapping
 {
 public:
-    Voxelization(int w, int h, const Eigen::Matrix3f& K);
-    ~Voxelization();
+    VoxelMapping(int w, int h, const Eigen::Matrix3f& K);
+    ~VoxelMapping();
 
     void reset();
     void CreateMap(int numEntries, int numVoxels, float voxelSize);
@@ -26,3 +28,5 @@ protected:
 };
 
 } // namespace vmap
+
+#endif

@@ -1,8 +1,6 @@
-#include "GlobalFuncs.h"
-#include "GlobalMapFuncs.h"
-#include "MapStruct.h"
-#include "MapStructFuncs.h"
-#include "PrefixSum.h"
+#include "cuda_utils.h"
+#include "device_functions.h"
+#include "map_struct.h"
 
 namespace vmap
 {

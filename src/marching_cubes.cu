@@ -1,10 +1,7 @@
-#include "ConstTriTable.h"
-#include "GlobalFuncs.h"
-#include "GlobalMapFuncs.h"
-#include "MapStructFuncs.h"
-#include "PrefixSum.h"
-#include "Voxelization.h"
-#include <curand_kernel.h>
+#include "cuda_utils.h"
+#include "map_struct.h"
+#include "triangle_table.h"
+#include "vmapping.h"
 
 namespace vmap
 {

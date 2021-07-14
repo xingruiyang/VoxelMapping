@@ -1,5 +1,5 @@
-#include "GlobalFuncs.h"
-#include "ImageProc.h"
+#include "cuda_utils.h"
+#include "image_proc.h"
 
 namespace vmap
 {
