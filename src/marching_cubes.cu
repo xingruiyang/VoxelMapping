@@ -6,14 +6,15 @@
 namespace vmap
 {
 
-template <class TVoxel>
-struct BuildVertexArray
+template <class TVoxel, bool bRGB = false>
+struct MarchingCubeFunctor
 {
     Eigen::Vector3f* triangles;
     HashEntry* block_array;
     uint* block_count;
     uint* triangle_count;
     Eigen::Vector3f* surfaceNormal;
+    Eigen::Matrix<unsigned char, 3, 1>* vert_color;
 
     HashEntry* hashTable;
     TVoxel* listBlocks;
@@ -213,6 +214,7 @@ struct BuildVertexArray
             return;
 
         Eigen::Vector3f verts[12];
+        Eigen::Matrix<unsigned char, 3, 1>* colors;
         Eigen::Vector3i pos = block_array[x].pos * BLOCK_SIZE;
 
         for (int voxelIdxZ = 0; voxelIdxZ < BLOCK_SIZE; ++voxelIdxZ)
@@ -221,6 +223,11 @@ struct BuildVertexArray
             int cubeIdx = make_vertex(verts, (pos + localPos).cast<float>());
             if (cubeIdx <= 0)
                 continue;
+
+            if (bRGB)
+            {
+                //TODO get color array
+            }
 
             for (int i = 0; triTable[cubeIdx][i] != -1; i += 3)
             {
@@ -236,14 +243,18 @@ struct BuildVertexArray
                     surfaceNormal[triangleId * 3] = n;
                     surfaceNormal[triangleId * 3 + 1] = n;
                     surfaceNormal[triangleId * 3 + 2] = n;
+                    if (bRGB)
+                    {
+                        // TODO: store colors in vert_colors
+                    }
                 }
             } // for (int i = 0; triTable[cubeIdx][i] != -1; i += 3)
         }     // for (int voxelIdxZ = 0; voxelIdxZ < BLOCK_SIZE; ++voxelIdxZ)
     }         // __device__ __forceinline__ void operator()() const
-};            // struct BuildVertexArray
+};            // struct MarchingCubeFunctor
 
 template <class TVoxel>
-__global__ void selectBlockKernel(BuildVertexArray<TVoxel> bva)
+__global__ void selectBlockKernel(MarchingCubeFunctor<TVoxel> bva)
 {
     bva.select_blocks();
 }
@@ -264,7 +275,7 @@ void Polygonize(
     cudaMemset(cuda_block_count, 0, sizeof(uint));
     cudaMemset(cuda_triangle_count, 0, sizeof(uint));
 
-    BuildVertexArray<TVoxel> bva;
+    MarchingCubeFunctor<TVoxel> bva;
     bva.block_array = map_struct.visibleTable;
     bva.block_count = cuda_block_count;
     bva.triangle_count = cuda_triangle_count;

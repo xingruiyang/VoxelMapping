@@ -28,6 +28,11 @@ struct VoxelMapping::VoxelizationImpl
     float *norms_gpu, *norms_cpu;
     float *points_gpu, *points_cpu;
 
+    // for map alignment
+    float* query_points_gpu;
+    float* read_sdf_gpu;
+    bool* validity_gpu;
+
     inline VoxelizationImpl(int w, int h, const Eigen::Matrix3f& K)
         : width(w), height(h), mK(K)
     {
@@ -130,7 +135,7 @@ struct VoxelMapping::VoxelizationImpl
         return num_triangles;
     }
 
-    std::vector<Eigen::Vector3f> GetSurfacePoints()
+    std::vector<Eigen::Vector3f> get_surface_points()
     {
         uint num_triangles = create_mesh();
         if (num_triangles == 0)
@@ -143,6 +148,12 @@ struct VoxelMapping::VoxelizationImpl
         return std::vector<Eigen::Vector3f>(
             static_cast<Eigen::Vector3f*>((void*)points_cpu),
             static_cast<Eigen::Vector3f*>((void*)points_cpu) + num_triangles);
+    }
+
+    void read_sdf(const std::vector<Eigen::Vector3f>& points,
+                  std::vector<Eigen::Vector3f>& neighbours,
+                  std::vector<float>& sdf, std::vector<bool>& validity)
+    {
     }
 };
 
@@ -185,7 +196,15 @@ int VoxelMapping::Polygonize(float*& vertex_out, float*& normal_out)
 
 std::vector<Eigen::Vector3f> VoxelMapping::GetSurfacePoints()
 {
-    return impl->GetSurfacePoints();
+    return impl->get_surface_points();
+}
+
+void VoxelMapping::ReadSDF(
+    const std::vector<Eigen::Vector3f>& points,
+    std::vector<Eigen::Vector3f>& neighbours,
+    std::vector<float>& sdf, std::vector<bool>& validity)
+{
+    impl->read_sdf(points, neighbours, sdf, validity);
 }
 
 } // namespace vmap

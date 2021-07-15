@@ -21,6 +21,9 @@ public:
     void RenderScene(cv::cuda::GpuMat& vmap, const Eigen::Matrix4f& camToWorld);
     int Polygonize(float*& verts_out, float*& norms_out);
     std::vector<Eigen::Vector3f> GetSurfacePoints();
+    void ReadSDF(const std::vector<Eigen::Vector3f>& points,
+                 std::vector<Eigen::Vector3f>& neighbours,
+                 std::vector<float>& sdf, std::vector<bool>& validity);
 
 protected:
     struct VoxelizationImpl;

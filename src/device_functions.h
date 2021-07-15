@@ -58,6 +58,14 @@ void GetSurfacePoints(
     void* vertex_out, // GPU
     uint triangle_count);
 
+template <class TVoxel>
+void ReadSDFAndNeighbour(
+    MapStruct<TVoxel> map,
+    void* query_points_in,
+    void* neighbours_out,
+    void* sdf_out,
+    void* validity_out);
+
 } // namespace vmap
 
 #endif

@@ -94,20 +94,11 @@ int main(int argc, char** argv)
     // const size_t bufferSize = sizeof(float) * 3 * 20000000;
 
     pangolin::GlBuffer vertBuffer, normBuffer;
-    // glGenBuffers(2, buffer);
-
-    // pangolin::GlBufferCudaPtr vertexBuffer(
-    //     pangolin::GlArrayBuffer, bufferSize, GL_FLOAT, 3,
-    //     cudaGraphicsMapFlagsWriteDiscard, GL_STREAM_DRAW);
-    // pangolin::GlBufferCudaPtr normalBuffer(
-    //     pangolin::GlArrayBuffer, bufferSize, GL_UNSIGNED_BYTE, 3,
-    //     cudaGraphicsMapFlagsWriteDiscard, GL_STREAM_DRAW);
-
-    // pangolin::CudaScopedMappedPtr vertex_out(vertexBuffer);
-    // pangolin::CudaScopedMappedPtr normal_out(normalBuffer);
-
     float *verts, *norms;
     int num_tri = map.Polygonize(verts, norms);
+
+    vertBuffer.Reinitialise(GL_ARRAY_BUFFER, num_tri * 9, GL_FLOAT, 3, GL_STATIC_DRAW, verts);
+    normBuffer.Reinitialise(GL_ARRAY_BUFFER, num_tri * 9, GL_FLOAT, 3, GL_STATIC_DRAW, norms);
 
     GLuint vao;
     glGenVertexArrays(1, &vao);
