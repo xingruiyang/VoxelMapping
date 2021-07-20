@@ -3,7 +3,7 @@
 #include "device_functions.h"
 #include "map_struct.h"
 
-#define MAX_VERTS_BUFFER 10000000
+#define MAX_VERTS_BUFFER 20000000
 
 namespace vmap
 {
@@ -63,13 +63,13 @@ struct VoxelMapping::VoxelizationImpl
         zRangeY.create(height / 8, width / 8, CV_32FC1);
 
         SafeCall(cudaMalloc((void**)&renderingBlocks, sizeof(RenderingBlock) * 100000));
-        SafeCall(cudaMalloc((void**)&verts_gpu, sizeof(float) * MAX_VERTS_BUFFER * 3));
-        SafeCall(cudaMalloc((void**)&norms_gpu, sizeof(float) * MAX_VERTS_BUFFER * 3));
-        SafeCall(cudaMalloc((void**)&points_gpu, sizeof(float) * MAX_VERTS_BUFFER));
+        SafeCall(cudaMalloc((void**)&verts_gpu, sizeof(float) * MAX_VERTS_BUFFER * 9));
+        SafeCall(cudaMalloc((void**)&norms_gpu, sizeof(float) * MAX_VERTS_BUFFER * 9));
+        SafeCall(cudaMalloc((void**)&points_gpu, sizeof(float) * MAX_VERTS_BUFFER * 3));
 
-        verts_cpu = new float[MAX_VERTS_BUFFER * 3];
-        norms_cpu = new float[MAX_VERTS_BUFFER * 3];
-        points_cpu = new float[MAX_VERTS_BUFFER];
+        verts_cpu = new float[MAX_VERTS_BUFFER * 9];
+        norms_cpu = new float[MAX_VERTS_BUFFER * 9];
+        points_cpu = new float[MAX_VERTS_BUFFER * 3];
 
         fprintf(stdout, "voxel map created\n");
     }

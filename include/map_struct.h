@@ -295,6 +295,12 @@ __device__ __forceinline__ bool AllocateHashEntry(int* heap, int* heapPtr, const
     return false;
 }
 
+// Solve weired Eigen issue with CUDA_STANDARD 17
+__device__ __forceinline__ bool Vector3Equal(const Eigen::Vector3i& a, const Eigen::Vector3i& b)
+{
+    return (a[0] == b[0] && a[1] == b[1] && a[2] == b[2]);
+}
+
 __device__ __forceinline__ void createBlock(const Eigen::Vector3i& blockPos, int* heap, int* heapPtr,
                                             HashEntry* hashTable, int* bucketMutex, int* linedListPtr,
                                             int numHashEntry, int numBucket)
@@ -303,7 +309,7 @@ __device__ __forceinline__ void createBlock(const Eigen::Vector3i& blockPos, int
     int* mutex = &bucketMutex[volatileIdx];
     HashEntry* current = &hashTable[volatileIdx];
     HashEntry* emptyEntry = nullptr;
-    if (current->pos == blockPos && current->ptr != -1)
+    if (Vector3Equal(current->pos, blockPos) && current->ptr != -1)
         return;
 
     if (current->ptr == -1)
@@ -313,7 +319,7 @@ __device__ __forceinline__ void createBlock(const Eigen::Vector3i& blockPos, int
     {
         volatileIdx = numBucket + current->offset - 1;
         current = &hashTable[volatileIdx];
-        if (current->pos == blockPos && current->ptr != -1)
+        if (Vector3Equal(current->pos, blockPos) && current->ptr != -1)
             return;
 
         if (current->ptr == -1 && !emptyEntry)
@@ -352,14 +358,14 @@ __device__ __forceinline__ bool findEntry(const Eigen::Vector3i& blockPos, HashE
 {
     uint volatileIdx = hash(blockPos, nBucket);
     out = &hashTable[volatileIdx];
-    if (out->ptr != -1 && out->pos == blockPos)
+    if (out->ptr != -1 && Vector3Equal(out->pos, blockPos))
         return true;
 
     while (out->offset >= 0)
     {
         volatileIdx = nBucket + out->offset - 1;
         out = &hashTable[volatileIdx];
-        if (out->ptr != -1 && out->pos == blockPos)
+        if (out->ptr != -1 && Vector3Equal(out->pos, blockPos))
             return true;
     }
 

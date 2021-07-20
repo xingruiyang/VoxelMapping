@@ -36,103 +36,26 @@ struct CreateBlockLineTracingFunctor
         if (x >= depth.cols || y >= depth.rows)
             return;
 
-        float dist = depth.ptr(y)[x];
+        const float& dist = depth.ptr(y)[x];
         if (isnan(dist) || dist < depthMin || dist > depthMax)
             return;
 
         float distNear = max(depthMin, dist - truncDistHalf);
-        float distFar = min(depthMax, dist + truncDistHalf);
+        float distFar = max(depthMin, dist + truncDistHalf);
         if (distNear >= distFar)
             return;
 
-        Eigen::Vector3i blockStart = voxelPosToBlockPos(worldPtToVoxelPos(unprojectWorld(x, y, distNear, invfx, invfy, cx, cy, T), voxelSize));
-        Eigen::Vector3i blockEnd = voxelPosToBlockPos(worldPtToVoxelPos(unprojectWorld(x, y, distFar, invfx, invfy, cx, cy, T), voxelSize));
+        Eigen::Vector3i pt_near = worldPtToVoxelPos(unprojectWorld(x, y, distNear, invfx, invfy, cx, cy, T), voxelSize);
+        Eigen::Vector3i pt_far = worldPtToVoxelPos(unprojectWorld(x, y, distFar, invfx, invfy, cx, cy, T), voxelSize);
+        Eigen::Vector3f dir = (pt_far - pt_near).cast<float>();
 
-        Eigen::Vector3i dir = blockEnd - blockStart;
-        Eigen::Vector3i increment = Eigen::Vector3i(dir(0) < 0 ? -1 : 1, dir(1) < 0 ? -1 : 1, dir(2) < 0 ? -1 : 1);
-        Eigen::Vector3i absIncrement = Eigen::Vector3i(abs(dir(0)), abs(dir(1)), abs(dir(2)));
-        Eigen::Vector3i incrementErr = Eigen::Vector3i(absIncrement(0) << 1, absIncrement(1) << 1, absIncrement(2) << 1);
+        float len_dir = dir.norm();
+        int num_steps = (int)ceil(2.0 * len_dir);
+        dir = dir / (float)(num_steps - 1);
+        Eigen::Vector3f pt_start = pt_near.cast<float>();
 
-        int err1;
-        int err2;
-
-        // Bresenham's line algorithm
-        // details see : https://en.m.wikipedia.org/wiki/Bresenham%27s_line_algorithm
-        if ((absIncrement(0) >= absIncrement(1)) && (absIncrement(0) >= absIncrement(2)))
-        {
-            err1 = incrementErr(1) - 1;
-            err2 = incrementErr(2) - 1;
-            allocateBlock(blockStart);
-            for (int i = 0; i < absIncrement(0); ++i)
-            {
-                if (err1 > 0)
-                {
-                    blockStart(1) += increment(1);
-                    err1 -= incrementErr(0);
-                }
-
-                if (err2 > 0)
-                {
-                    blockStart(2) += increment(2);
-                    err2 -= incrementErr(0);
-                }
-
-                err1 += incrementErr(1);
-                err2 += incrementErr(2);
-                blockStart(0) += increment(0);
-                allocateBlock(blockStart);
-            }
-        }
-        else if ((absIncrement(1) >= absIncrement(0)) && (absIncrement(1) >= absIncrement(2)))
-        {
-            err1 = incrementErr(0) - 1;
-            err2 = incrementErr(2) - 1;
-            allocateBlock(blockStart);
-            for (int i = 0; i < absIncrement(1); ++i)
-            {
-                if (err1 > 0)
-                {
-                    blockStart(0) += increment(0);
-                    err1 -= incrementErr(1);
-                }
-
-                if (err2 > 0)
-                {
-                    blockStart(2) += increment(2);
-                    err2 -= incrementErr(1);
-                }
-
-                err1 += incrementErr(0);
-                err2 += incrementErr(2);
-                blockStart(1) += increment(1);
-                allocateBlock(blockStart);
-            }
-        }
-        else
-        {
-            err1 = incrementErr(1) - 1;
-            err2 = incrementErr(0) - 1;
-            allocateBlock(blockStart);
-            for (int i = 0; i < absIncrement(2); ++i)
-            {
-                if (err1 > 0)
-                {
-                    blockStart(1) += increment(1);
-                    err1 -= incrementErr(2);
-                }
-
-                if (err2 > 0)
-                {
-                    blockStart(0) += increment(0);
-                    err2 -= incrementErr(2);
-                }
-
-                err1 += incrementErr(1);
-                err2 += incrementErr(0);
-                blockStart(2) += increment(2);
-                allocateBlock(blockStart);
-            }
-        }
+        for (int step = 0; step < num_steps; ++step, pt_start += dir)
+            allocateBlock(voxelPosToBlockPos(pt_start.cast<int>()));
     }
 };
 
