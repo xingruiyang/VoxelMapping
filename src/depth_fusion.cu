@@ -491,4 +491,64 @@ template int FuseDepthAndImage<VoxelRGB>(MapStruct<VoxelRGB> map, const cv::cuda
                                          const cv::cuda::GpuMat depth, const Eigen::Matrix4f& camToWorld,
                                          const Eigen::Matrix3f& K);
 
+template <class TVoxel>
+int CheckVisibleBlocks(
+    MapStruct<TVoxel> map,
+    const int& width,
+    const int& height,
+    const Eigen::Matrix4f& camToWorld,
+    const Eigen::Matrix3f& K)
+{
+    float fx = K(0, 0);
+    float fy = K(1, 1);
+    float cx = K(0, 2);
+    float cy = K(1, 2);
+
+    map.resetVisibleBlockCount();
+    CheckEntryVisibilityFunctor<TVoxel> cfunctor;
+    cfunctor.hashTable = map.hashTable;
+    cfunctor.voxelBlock = map.voxelBlock;
+    cfunctor.visibleEntry = map.visibleTable;
+    cfunctor.visibleEntryCount = map.visibleBlockNum;
+    cfunctor.heap = map.heap;
+    cfunctor.heapPtr = map.heapPtr;
+    cfunctor.nVBlock = map.nVBlock;
+    cfunctor.Tinv = camToWorld.inverse().cast<float>();
+    cfunctor.cols = width;
+    cfunctor.rows = height;
+    cfunctor.fx = fx;
+    cfunctor.fy = fy;
+    cfunctor.cx = cx;
+    cfunctor.cy = cy;
+    cfunctor.depthMin = MIN_DEPTH;
+    cfunctor.depthMax = MAX_DEPTH;
+    cfunctor.voxelSize = map.voxelSize;
+    cfunctor.nEntry = map.nEntry;
+
+    dim3 thread(1024);
+    dim3 block(cv::divUp(map.nEntry, thread.x));
+
+    callDeviceFunctor<<<block, thread>>>(cfunctor);
+
+    SafeCall(cudaDeviceSynchronize());
+    SafeCall(cudaGetLastError());
+
+    uint visible_block_count = 0;
+    map.getVisibleBlockCount(visible_block_count);
+    return visible_block_count;
+}
+
+template int CheckVisibleBlocks<Voxel>(
+    MapStruct<Voxel> map,
+    const int& width,
+    const int& height,
+    const Eigen::Matrix4f& camToWorld,
+    const Eigen::Matrix3f& K);
+template int CheckVisibleBlocks<VoxelRGB>(
+    MapStruct<VoxelRGB> map,
+    const int& width,
+    const int& height,
+    const Eigen::Matrix4f& camToWorld,
+    const Eigen::Matrix3f& K);
+
 } // namespace vmap

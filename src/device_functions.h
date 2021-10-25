@@ -25,6 +25,14 @@ int FuseDepthAndImage(
     const Eigen::Matrix3f& K);
 
 template <class TVoxel>
+int CheckVisibleBlocks(
+    MapStruct<TVoxel> map,
+    const int &width,
+    const int &height,
+    const Eigen::Matrix4f& camToWorld,
+    const Eigen::Matrix3f& K);
+
+template <class TVoxel>
 void ProjectRenderingBlocks(
     MapStruct<TVoxel> map,
     uint count_visible_block,

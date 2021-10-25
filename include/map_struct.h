@@ -6,7 +6,7 @@
 #define BLOCK_SIZE 8
 #define BLOCK_SIZE_3 512
 #define BLOCK_SIZE_M1 7
-#define MAX_DEPTH 3.0f
+#define MAX_DEPTH 3.5f
 #define MIN_DEPTH 0.1f
 
 typedef Eigen::Matrix<unsigned char, 3, 1> Vector3b;

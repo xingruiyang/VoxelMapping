@@ -83,6 +83,7 @@ struct VoxelMapping::VoxelizationImpl
     inline void render_scene(
         cv::cuda::GpuMat& vmap, const Eigen::Matrix4f& camToWorld)
     {
+        numVisBlock = CheckVisibleBlocks(deviceMap, width, height, camToWorld, mK);
         if (numVisBlock == 0)
             return;
 

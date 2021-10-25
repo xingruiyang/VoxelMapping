@@ -332,11 +332,13 @@ struct MapRenderingDelegate
         int u = __float2int_rd((float)x / 8);
         int v = __float2int_rd((float)y / 8);
 
-        auto zNear = zRangeX.ptr(v)[u];
-        auto zFar = zRangeY.ptr(v)[u];
-        if (zNear < FLT_EPSILON || zFar < FLT_EPSILON ||
-            isnan(zNear) || isnan(zFar))
-            return;
+        // auto zNear = zRangeX.ptr(v)[u];
+        // auto zFar = zRangeY.ptr(v)[u];
+        // if (zNear < FLT_EPSILON || zFar < FLT_EPSILON ||
+        //     isnan(zNear) || isnan(zFar))
+        //     return;
+        float zNear = MIN_DEPTH;
+        float zFar = MAX_DEPTH;
 
         float sdf = 1.0f;
         float lastReadSDF;
