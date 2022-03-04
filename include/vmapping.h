@@ -4,7 +4,6 @@
 #include <Eigen/Core>
 #include <memory>
 #include <opencv2/opencv.hpp>
-#include <sophus/se3.hpp>
 
 namespace vmap
 {

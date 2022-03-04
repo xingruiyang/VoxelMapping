@@ -1,5 +1,6 @@
 #include "cuda_utils.h"
 #include "image_proc.h"
+#include <Eigen/Geometry>
 
 namespace vmap
 {
